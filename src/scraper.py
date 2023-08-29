@@ -1,5 +1,17 @@
 from RPA.Browser.Selenium import Selenium
-from .utils import resilient_action
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.support import expected_conditions as EC
+from SeleniumLibrary.errors import NoOpenBrowser
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
+from .utils import resilient_action, find_child_element
+import logging
+
+# Configure logging to capture into a file
+logging.basicConfig(level=logging.INFO, filename='../logs/scraper.log')
+logger = logging.getLogger('Scraper')
 
 
 class Scraper:
@@ -31,7 +43,15 @@ class Scraper:
     @resilient_action
     def open_website(self):
         """Open the website specified in the configuration settings."""
-        self.browser.open_available_browser(self.config["base_url"])
+        try:
+            self.browser.open_available_browser(self.config["base_url"])
+            if self.browser is None:
+                raise NoOpenBrowser
+            logger.info("Successfully opened the website.")
+        except NoOpenBrowser as e:
+            logging.error(f"Error opening browser: {e}")
+        except Exception as e:
+            logging.error(f"Unexpected error: {e}")
 
     @resilient_action
     def search_for_term(self, term):
@@ -40,24 +60,130 @@ class Scraper:
         Parameters:
             term (str): The search term to be entered into the search bar.
         """
-        # Click the button to open the search bar
-        search_button = "button[aria-label='Open search bar']"
-        self.browser.click_element(search_button)
+        try:
+            # Wait for the search button to appear and then click it
+            search_button = "button[data-testid='Button']"
+            WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, search_button))
+            ).click()
+            logger.info(f"Successfully clicked the search button.")
 
-        # Now enter the search term in the input field and press ENTER
-        input_field = "#react-aria8902221257-\\:r8\\:"
-        self.browser.input_text(input_field, term)
-        self.browser.press_keys(input_field, "ENTER")
+            # Wait for the search input field to appear
+            input_field = "input[data-testid='FormField:input']"
+            WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, input_field))
+            ).send_keys(term)
+
+            logger.info(f"Successfully entered the search term: {term}")
+
+            WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                EC.text_to_be_present_in_element_value(
+                    (By.CSS_SELECTOR, input_field), term
+                )
+            )
+            WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, input_field))
+            ).send_keys(Keys.ENTER)
+
+            div_search = "div[data-testid='StickyRail']"
+            WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, div_search))
+            )
+
+            search_header = "h1[data-testid='Heading']"
+            WebDriverWait(
+                self.browser.driver, self.config["wait_time"]
+            ).until(
+                EC.text_to_be_present_in_element_value(
+                    (By.CSS_SELECTOR, search_header), f"Search results for “{term}”"
+                )
+            )
+        except TimeoutException:
+            logging.warning("Element not found within the specified time.")
 
     @resilient_action
     def get_search_results(self):
-        """Retrieve search results from the website.
+        """Retrieve and return all search results from multiple pages on the website.
 
-        Note: Implementation of scraping logic is needed.
+        This method uses Selenium to navigate the website and scrape search results.
+        It will automatically handle pagination by clicking the "Next" button until
+        the end is reached or the button becomes disabled.
+
+        Returns:
+            list: A list of dictionaries containing the scraped data for each search result.
+                Each dictionary includes 'title', 'link', 'category', and 'time'.
         """
-        # implement your scraping logic here
-        pass
+
+        all_scraped_data = []
+        try:
+            while True:
+                # Wait for the search results list to appear
+                WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "ul.search-results__list__2SxSK")
+                    )
+                )
+                logger.info("Successfully loaded search results.")
+
+                # Find and iterate over each list item in the search results
+                search_results = WebDriverWait(
+                    self.browser.driver, self.config["wait_time"]
+                ).until(
+                    EC.presence_of_all_elements_located(
+                        (By.CSS_SELECTOR, "li.search-results__item__2oqiX")
+                    )
+                )
+
+                scraped_data = []
+                wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
+                for result in search_results:
+                    title_element = wait.until(
+                        lambda driver: find_child_element(
+                            result, "h3[data-testid='Heading'] a"
+                        )
+                    )
+                    category_element = wait.until(
+                        lambda driver: find_child_element(
+                            result, "span[data-testid='Label'] span"
+                        )
+                    )
+
+                    time_element = wait.until(
+                        lambda driver: find_child_element(
+                            result, "time[data-testid='Body']"
+                        )
+                    )
+                    title = title_element.text
+                    link = title_element.get_attribute("href")
+                    category = category_element.text
+                    time = time_element.get_attribute("datetime")
+
+                    # Store in a dictionary and add to the list of scraped data
+                    scraped_data.append(
+                        {
+                            "title": title,
+                            "link": link,
+                            "category": category,
+                            "time": time,
+                        }
+                    )
+
+                all_scraped_data.extend(scraped_data)
+
+                # Check if there's a "Next" button that's not disabled
+                WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "button[aria-label^='Next stories']")
+                    )
+                ).click()
+                logger.info("Successfully retrieved all search results.")
+        except TimeoutException:
+            logging.warning("One of the elements was not found in the specified time.")
+        except (NoSuchElementException, WebDriverException):
+            logging.info("Reached the end of the pages or encountered an exception.")
+        return all_scraped_data
 
     def close_browser(self):
         """Close all open browser windows."""
         self.browser.close_all_browsers()
+        logger.info("Successfully closed all browser windows.")

@@ -1,5 +1,6 @@
 import json
 import functools
+from selenium.webdriver.common.by import By
 
 def read_config(file_path):
     """Read JSON configuration from a file and return as a dictionary.
@@ -33,3 +34,9 @@ def resilient_action(func):
             print(f"An error occurred: {e}")
             # Add retry logic or logging here
     return wrapper
+
+def find_child_element(parent_element, css_selector):
+    try:
+        return parent_element.find_element(By.CSS_SELECTOR, css_selector)
+    except:
+        return None
