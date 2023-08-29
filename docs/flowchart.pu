@@ -1,0 +1,56 @@
+@startuml NewsScraper
+!define RECTANGLE class
+
+state "Initialize the RPA bot" as Initial
+
+Initial --> OpenSite: Open the site by following the link
+
+state "Handle website failure" as HandleSiteFailure
+state "End the process" as End
+
+OpenSite -down-> EnterSearch: [Success] Enter phrase in search field
+OpenSite --> HandleSiteFailure: [Failure]
+HandleSiteFailure --> EnterSearch: [Retry Success]
+HandleSiteFailure --> End: [Retry Limit Reached]
+
+state "Navigate to the result page" as ResultPage
+state "If possible, select a news category or section" as ChooseCategory
+state "Choose the latest (newest) news" as GetCurrent
+
+EnterSearch --> ResultPage: Navigate to the result page
+ResultPage --> ChooseCategory
+ResultPage --> GetCurrent
+ChooseCategory --> GetCurrent
+
+state "Get the values (title, date, description)" as GetValues
+state "Check if news falls within required time period" as CheckTime
+state "Store in an Excel file" as StoreExcel
+state "Download the news picture" as DownloadPicture
+
+
+state "Handle application-level failure" as HandleDataFailure
+state "Handle Excel failure" as HandleExcelFailure
+state "Handle picture download failure" as HandlePicFailure
+
+GetCurrent --> GetValues: [For Each News]
+GetValues --> CheckTime
+
+CheckTime --> StoreExcel: [True]
+CheckTime --> End: [False]
+
+StoreExcel --> DownloadPicture
+DownloadPicture --> GetCurrent
+
+GetValues --> HandleDataFailure: [Failure]
+HandleDataFailure --> GetValues: [Retry Success]
+HandleDataFailure --> End: [Retry Limit Reached]
+
+StoreExcel --> HandleExcelFailure: [Failure]
+HandleExcelFailure --> StoreExcel: [Retry Success]
+HandleExcelFailure --> End: [Retry Limit Reached]
+
+DownloadPicture --> HandlePicFailure: [Failure]
+HandlePicFailure --> DownloadPicture: [Retry Success]
+HandlePicFailure --> End: [Retry Limit Reached]
+
+@enduml
