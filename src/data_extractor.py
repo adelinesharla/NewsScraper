@@ -110,21 +110,30 @@ class DataExtractor:
         """
         try:
             excel = Files()
-            excel.create_workbook(self.excel_file_path)
-            excel.create_worksheet("data")
+            if os.path.exists(self.excel_file_path):
+                excel.open_workbook(self.excel_file_path)
+                excel.set_current_worksheet("data")
+                
+                last_row = excel.get_row_count("data") + 1
 
-            # fill headers
-            col = 1
-            for header in self.headers:
-                excel.set_cell_value(1, col, header)
-                col += 1
+                col = 1
+                for key in data:
+                    excel.set_cell_value(last_row, col, data[key])
+                    col += 1
+            else:
+                excel.create_workbook(self.excel_file_path)
+                excel.create_worksheet("data")
+                # fill headers
+                col = 1
+                for header in self.headers:
+                    excel.set_cell_value(1, col, header)
+                    col += 1
 
-            # fill data
-            col = 1
-            for key in data:
-                excel.set_cell_value(2, col, data[key])
-                col += 1
-
+                # fill data
+                col = 1
+                for key in data:
+                    excel.set_cell_value(2, col, data[key])
+                    col += 1
 
             excel.save_workbook()
             excel.close_workbook()
