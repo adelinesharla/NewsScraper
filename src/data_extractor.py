@@ -4,6 +4,7 @@ import logging
 import re
 from requests import get
 from uuid import uuid4
+import os
 
 # Configure logging to capture into a file
 logging.basicConfig(level=logging.INFO, filename="./logs/data_extractor.log")
@@ -127,6 +128,8 @@ class DataExtractor:
 
             excel.save_workbook()
             excel.close_workbook()
+            if not os.path.exists(self.excel_file_path):
+                raise Exception()
 
         except Exception as e:
             logging.error(f"Failed to store data to Excel: {e}")

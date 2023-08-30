@@ -1,0 +1,9 @@
+{
+    "settings": {
+        "base_url": "https://www.reuters.com/",
+        "wait_time": 10
+    },
+    "search_term": "brazil womens",
+    "mounth_number": 3,
+    "section": "sport"
+}
