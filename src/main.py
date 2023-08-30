@@ -19,7 +19,7 @@ This script requires that the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.Wo
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-from RPA.Robocloud.Items import Items
+from RPA.Robocorp.Storage import storage
 from utils import read_config
 import logging
 
@@ -64,12 +64,8 @@ def main():
             print(data)
             extractor.store_data_to_excel(data)
         print("stored_results")
-        # Initialize the Robocloud Items library
-        items = Items()
-        items.init()
 
-        # Upload the Excel file to Robocloud Artifacts
-        items.add_file(extractor.excel_file_path, name=extractor.excel_file_name)
+        storage.set_file_asset(extractor.excel_file_name, extractor.excel_file_path)
 
         # Create and save the output work item
         output_work_item = {
