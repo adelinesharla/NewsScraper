@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import resilient_action
+from .utils import resilient_action
 import logging
 
 # Configure logging to capture into a file
@@ -17,7 +17,8 @@ class DataExtractor:
     store_data_to_excel(data: dict) -> None:
         Stores the extracted data into an Excel file.
     """
-
+    excel_file_path = "./data/scraped_data.xlsx"
+    excel_file_name = "scraped_data.xlsx"
     @resilient_action
     def extract_data(self, search_result):
         """Extract relevant data from a given search result.
@@ -73,13 +74,10 @@ class DataExtractor:
             # Criando um DataFrame a partir dos dados
             df = pd.DataFrame(data)
 
-            # Definindo o nome do arquivo Excel
-            excel_filename = "./data/scraped_data.xlsx"
-
             # Salvando o DataFrame em um arquivo Excel
-            df.to_excel(excel_filename, index=False)
+            df.to_excel(self.excel_file_path, index=False)
 
-            logging.info(f"Data successfully saved to {excel_filename}")
+            logging.info(f"Data successfully saved to {self.excel_file_path}")
 
         except Exception as e:
             logging.error(f"Failed to store data to Excel: {e}")

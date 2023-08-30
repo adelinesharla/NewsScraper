@@ -41,7 +41,6 @@ def main():
     8. Writes work items for output
     9. Closes the web browser
     """
-
     work_items = WorkItems()
     # input_work_item = work_items.load_work_item()
     # config = input_work_item["config"]
@@ -62,23 +61,22 @@ def main():
 
         for result in search_results:
             data = extractor.extract_data(result)
+            print(data)
             extractor.store_data_to_excel(data)
         print("stored_results")
-        """
-        # Upload the Excel file to Robocloud Artifacts
+        # Initialize the Robocloud Items library
         items = Items()
         items.init()
 
-        # Fazendo o upload para Robocloud Artifacts
-        items.add_file(extractor.excel_file_path, name=extractor.excel_file_path)
+        # Upload the Excel file to Robocloud Artifacts
+        items.add_file(extractor.excel_file_path, name=extractor.excel_file_name)
 
+        # Create and save the output work item
         output_work_item = {
             "status": "completed",
-            "excel_file": extractor.excel_file_path,
+            "excel_file": extractor.excel_file_name,
         }
-
         work_items.save_work_item(output_work_item)
-        """
     finally:
         scraper.close_browser()
 
