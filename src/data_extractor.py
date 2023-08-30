@@ -1,5 +1,5 @@
 from RPA.Excel.Files import Files
-from utils import resilient_action, process_image
+from utils import resilient_action
 import logging
 import re
 from requests import get
