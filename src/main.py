@@ -9,29 +9,35 @@ The script performs the following tasks:
 4. Retrieves the search results
 5. Extracts relevant data from each result
 6. Stores the extracted data in an Excel file
-7. Writes work items for output
-8. Closes the web browser
+7. Uploads the Excel file to Robocloud Artifacts
+8. Writes work items for output
+9. Closes the web browser
 
-This script requires that the 'RPA.Browser.Selenium', 'pandas', and 'RPA.Robocorp.WorkItems' libraries are installed within the Python environment.
+This script requires that the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.WorkItems', and 'RPA.Robocloud.Items' libraries are installed within the Python environment.
 """
 
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-from utils import read_config
+from RPA.Robocloud.Items import Items
+from utils import configure_logging
+
+logger = configure_logging("Scraper", "../logs/scraper.log")
+
 
 def main():
     """Execute the main workflow for web scraping from Reuters.
 
-    Steps:
-    1. Load configuration settings from work items.
-    2. Initialize scraper and data extractor classes.
-    3. Open the Reuters website.
-    4. Search for a given term.
-    5. Scrape and extract data for each search result.
-    6. Store the extracted data in an Excel file.
-    7. Write output to work items.
-    8. Close the web browser.
+        Steps:
+    1. Reads work items for configuration settings
+    2. Opens the Reuters website
+    3. Searches for a term ("climate change" in this example)
+    4. Retrieves the search results
+    5. Extracts relevant data from each result
+    6. Stores the extracted data in an Excel file
+    7. Uploads the Excel file to Robocloud Artifacts
+    8. Writes work items for output
+    9. Closes the web browser
     """
 
     work_items = WorkItems()
@@ -50,15 +56,23 @@ def main():
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
 
+        # Upload the Excel file to Robocloud Artifacts
+        items = Items()
+        items.init()
+
+        # Fazendo o upload para Robocloud Artifacts
+        items.add_file(extractor.excel_file_path, name=extractor.excel_file_path)
+
         output_work_item = {
             "status": "completed",
-            "excel_file": extractor.excel_file_path
+            "excel_file": extractor.excel_file_path,
         }
-        
+
         work_items.save_work_item(output_work_item)
 
     finally:
         scraper.close_browser()
+
 
 if __name__ == "__main__":
     main()
