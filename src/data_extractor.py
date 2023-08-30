@@ -1,9 +1,9 @@
 import pandas as pd
-from .utils import resilient_action
+from utils import resilient_action
 import logging
 
 # Configure logging to capture into a file
-logging.basicConfig(level=logging.INFO, filename='../logs/data_extractor.log')
+logging.basicConfig(level=logging.INFO, filename='./logs/data_extractor.log')
 logger = logging.getLogger('DataExtractor')
 
 class DataExtractor:
@@ -74,7 +74,7 @@ class DataExtractor:
             df = pd.DataFrame(data)
 
             # Definindo o nome do arquivo Excel
-            excel_filename = "../data/scraped_data.xlsx"
+            excel_filename = "./data/scraped_data.xlsx"
 
             # Salvando o DataFrame em um arquivo Excel
             df.to_excel(excel_filename, index=False)

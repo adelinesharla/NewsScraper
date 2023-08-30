@@ -6,11 +6,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from SeleniumLibrary.errors import NoOpenBrowser
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
-from .utils import resilient_action, find_child_element
+from utils import resilient_action
 import logging
 
 # Configure logging to capture into a file
-logging.basicConfig(level=logging.INFO, filename="../logs/scraper.log")
+logging.basicConfig(level=logging.INFO, filename="./logs/scraper.log")
 logger = logging.getLogger("Scraper")
 
 

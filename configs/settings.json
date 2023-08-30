@@ -1,4 +1,5 @@
 {
     "base_url": "https://www.reuters.com/",
-    "wait_time": 10
+    "wait_time": 10,
+    "search_term": "brazil womens"
 }

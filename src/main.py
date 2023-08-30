@@ -20,9 +20,11 @@ from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
 from RPA.Robocloud.Items import Items
-from utils import configure_logging
+from utils import read_config
+import logging
 
-logger = configure_logging("Scraper", "../logs/scraper.log")
+logging.basicConfig(level=logging.INFO, filename='./logs/main.log')
+logger = logging.getLogger('Main')
 
 
 def main():
@@ -41,21 +43,22 @@ def main():
     """
 
     work_items = WorkItems()
-    input_work_item = work_items.load_work_item()
-    config = input_work_item["config"]
+    #input_work_item = work_items.load_work_item()
+    #config = input_work_item["config"]
+    config = read_config("./configs/settings.json")
 
     scraper = Scraper(config)
     extractor = DataExtractor()
 
     try:
         scraper.open_website()
-        scraper.search_for_term(config.get("search_term"))
+        #craper.search_for_term(config.get("search_term"))
+        scraper.search_for_term(config["search_term"])
         search_results = scraper.get_search_results()
 
         for result in search_results:
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
-
         # Upload the Excel file to Robocloud Artifacts
         items = Items()
         items.init()
@@ -69,7 +72,6 @@ def main():
         }
 
         work_items.save_work_item(output_work_item)
-
     finally:
         scraper.close_browser()
 
