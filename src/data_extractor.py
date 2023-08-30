@@ -27,12 +27,13 @@ class DataExtractor:
 
     excel_file_path = "./data/scraped_data.xlsx"
     excel_file_name = "scraped_data.xlsx"
+    headers = ["title", "image", "date", "description", "money_pattern"]
 
     def process_image(self, url):
         response = get(url)
         id = uuid4()
         file_path = f"./data/image_{id}.png"
-        file_name = "image_{id}.png"
+        file_name = f"image_{id}.png"
         if response.status_code == 200:
             with open(file_path, "wb") as f:
                 f.write(response.content)
@@ -113,18 +114,16 @@ class DataExtractor:
 
             # fill headers
             col = 1
-            for header in data.keys():
+            for header in self.headers:
                 excel.set_cell_value(1, col, header)
                 col += 1
 
             # fill data
-            row = 2
-            for i in range(len(data["title"])):
-                col = 1
-                for key in data:
-                    excel.set_cell_value(row, col, data[key][i])
-                    col += 1
-                row += 1
+            col = 1
+            for key in data:
+                excel.set_cell_value(2, col, data[key])
+                col += 1
+
 
             excel.save_workbook()
             excel.close_workbook()
