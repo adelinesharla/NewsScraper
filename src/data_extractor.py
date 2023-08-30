@@ -1,10 +1,14 @@
-import pandas as pd
-from utils import resilient_action
+from RPA.Excel.Files import Files
+from utils import resilient_action, process_image
 import logging
+import re
+from requests import get
+from uuid import uuid4
 
 # Configure logging to capture into a file
-logging.basicConfig(level=logging.INFO, filename='./logs/data_extractor.log')
-logger = logging.getLogger('DataExtractor')
+logging.basicConfig(level=logging.INFO, filename="./logs/data_extractor.log")
+logger = logging.getLogger("DataExtractor")
+
 
 class DataExtractor:
     """A class for extracting and storing data related to news articles.
@@ -16,9 +20,42 @@ class DataExtractor:
 
     store_data_to_excel(data: dict) -> None:
         Stores the extracted data into an Excel file.
+
+        TODO
+        3 - count of search phrases in the title and description
     """
+
     excel_file_path = "./data/scraped_data.xlsx"
     excel_file_name = "scraped_data.xlsx"
+
+    def process_image(self, url):
+        response = get(url)
+        id = uuid4()
+        file_path = f"./data/image_{id}.png"
+        file_name = "image_{id}.png"
+        if response.status_code == 200:
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+        else:
+            print(f"Failed to download image, status code: {response.status_code}")
+        # upload_file(file_path, file_name)
+        return file_name
+
+    def contains_money_patterns(self, input_str):
+        patterns = [
+            r"\$\d+\.\d{2}",  # $xx.x
+            r"\$\d{1,3}(?:,\d{3})*\.\d{2}",  # $xxx,xxx.xx
+            r"\d+ dollars",  # xx dollars
+            r"\d+ USD",  # xx USD
+        ]
+
+        compound_pattern = "|".join(patterns)
+
+        if re.search(compound_pattern, input_str):
+            return True
+        else:
+            return False
+
     @resilient_action
     def extract_data(self, search_result):
         """Extract relevant data from a given search result.
@@ -35,49 +72,62 @@ class DataExtractor:
         """
         extracted_data = {}
         try:
-            # Supondo que 'title_element', 'date_element' e 'description_element'
-            # sejam as chaves no dicionário search_result
-            title_element = search_result.get('title_element')
-            date_element = search_result.get('date_element')
-            description_element = search_result.get('description_element')
-            link_element = search_result.get('link_element')
+            title_element = search_result.get("title_element")
+            date_element = search_result.get("date_element")
+            description_element = search_result.get("description_element")
+            link_element = search_result.get("link_element")
 
-            # Usando Selenium para extrair texto ou outros atributos dos elementos
             if title_element:
-                extracted_data['title'] = title_element.text
+                extracted_data["title"] = title_element.text
             if link_element:
-                extracted_data['link'] = link_element.get_attribute("href")
+                filename = self.process_image(link_element.get_attribute("href"))
+                extracted_data["image"] = filename
             if date_element:
-                extracted_data['date'] = date_element.get_attribute("datetime")
+                extracted_data["date"] = date_element.get_attribute("datetime")
             if description_element:
-                extracted_data['description'] = description_element.text
+                extracted_data["description"] = description_element.text
+            extracted_data["money_pattern"] = self.contains_money_patterns(
+                extracted_data["title"] + extracted_data["description"]
+            )
         except Exception as e:
             logging.error(f"Failed to extract data: {e}")
         return extracted_data
 
-
-    
     @resilient_action
     def store_data_to_excel(self, data):
         """Store the extracted data into an Excel file.
 
         Parameters:
         -----------
-        data : list of dict
-            A list containing dictionaries of the extracted data.
+        data : dict
+            A dictionarie of the extracted data.
 
         Returns:
         --------
         None
         """
         try:
-            # Criando um DataFrame a partir dos dados
-            df = pd.DataFrame(data)
+            excel = Files()
+            excel.create_workbook(self.excel_file_path)
+            excel.create_worksheet("data")
 
-            # Salvando o DataFrame em um arquivo Excel
-            df.to_excel(self.excel_file_path, index=False)
+            # fill headers
+            col = 1
+            for header in data.keys():
+                excel.set_cell_value(1, col, header)
+                col += 1
 
-            logging.info(f"Data successfully saved to {self.excel_file_path}")
+            # fill data
+            row = 2
+            for i in range(len(data["title"])):
+                col = 1
+                for key in data:
+                    excel.set_cell_value(row, col, data[key][i])
+                    col += 1
+                row += 1
+
+            excel.save_workbook()
+            excel.close_workbook()
 
         except Exception as e:
             logging.error(f"Failed to store data to Excel: {e}")

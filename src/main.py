@@ -19,7 +19,6 @@ This script requires that the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.Wo
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-from RPA.Robocorp.Storage import storage
 from utils import read_config
 import logging
 
@@ -41,12 +40,14 @@ def main():
     8. Writes work items for output
     9. Closes the web browser
     """
-    work_items = WorkItems()
-    # input_work_item = work_items.load_work_item()
-    # config = input_work_item["config"]
-    config = read_config("./configs/settings.json")
+    library = WorkItems()
+    library.get_input_work_item()
+    config = library.get_work_item_variables()
+    #print(config)
+    
+    #config = read_config("./configs/settings.json")
 
-    scraper = Scraper(config)
+    scraper = Scraper(config["settings"])
     extractor = DataExtractor()
 
     try:
@@ -64,15 +65,13 @@ def main():
             print(data)
             extractor.store_data_to_excel(data)
         print("stored_results")
-
-        storage.set_file_asset(extractor.excel_file_name, extractor.excel_file_path)
-
+        
         # Create and save the output work item
         output_work_item = {
             "status": "completed",
             "excel_file": extractor.excel_file_name,
         }
-        work_items.save_work_item(output_work_item)
+        library.save_work_item(output_work_item)
     finally:
         scraper.close_browser()
 
