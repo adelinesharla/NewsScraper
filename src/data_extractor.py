@@ -1,5 +1,5 @@
 import pandas as pd
-from .utils import resilient_action
+from utils import resilient_action
 import logging
 
 # Configure logging to capture into a file
