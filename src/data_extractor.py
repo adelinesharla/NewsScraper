@@ -138,7 +138,8 @@ class DataExtractor:
             excel.save_workbook()
             excel.close_workbook()
             if not os.path.exists(self.excel_file_path):
-                raise Exception()
+                raise Exception("Excel file doesnt exists")
 
         except Exception as e:
             logging.error(f"Failed to store data to Excel: {e}")
+            raise Exception(e)
