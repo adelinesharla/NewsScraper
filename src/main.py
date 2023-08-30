@@ -71,8 +71,7 @@ def main():
             "status": "completed",
             "excel_file": extractor.excel_file_name,
         }
-        output_work_item = WorkItems()
-        output_work_item.create_output_work_item(output_work_item_data)
+        library.create_output_work_item(output_work_item_data)
     finally:
         scraper.close_browser()
 
