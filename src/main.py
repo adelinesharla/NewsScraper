@@ -20,6 +20,7 @@ from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, filename="./logs/main.log")
 logger = logging.getLogger("Main")
@@ -54,13 +55,13 @@ def main():
         print(f"Step 3 done. Searched for  {config['search_term']}")
         search_results = scraper.get_search_results()
         print(f"Step 4 done. Retrieved the search results")
-
+        print(f"Results: {search_results}")
         for result in search_results:
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
         print(f"Step 5 and 6 done. Extracted relevant data from result and stored")
-
-        library.add_work_item_file(extractor.excel_file_path, name=extractor.excel_file_name)
+        robot_root = os.environ.get('ROBOT_ROOT')
+        library.add_work_item_file(f"{robot_root}{extractor.excel_file_name}", name=extractor.excel_file_name)
         print(f"Step 7 done. Uploaded the Excel file to Robocloud Artifacts")
         
         output_work_item_data = {
