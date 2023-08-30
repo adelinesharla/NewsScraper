@@ -1,22 +1,6 @@
 import json
 import functools
 from RPA.Robocloud.Items import Items
-import requests
-from requests import get
-from uuid import uuid4
-
-def process_image(url):
-    response = get(url)
-    id = uuid4()
-    file_path = f"./data/image_{id}.png"
-    file_name = "image_{id}.png"
-    if response.status_code == 200:
-        with open(file_path, "wb") as f:
-            f.write(response.content)
-    else:
-        print(f"Failed to download image, status code: {response.status_code}")
-    #upload_file(file_path, file_name)
-    return file_name
 
 
 def upload_file(file_path, file_name):
