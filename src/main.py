@@ -43,7 +43,7 @@ def main():
 
     try:
         scraper.open_website()
-        scraper.search_for_term(config.get("search_term", "climate change"))
+        scraper.search_for_term(config.get("search_term"))
         search_results = scraper.get_search_results()
 
         for result in search_results:

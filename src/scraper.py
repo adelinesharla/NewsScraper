@@ -153,18 +153,14 @@ class Scraper:
                             result, "time[data-testid='Body']"
                         )
                     )
-                    title = title_element.text
-                    link = title_element.get_attribute("href")
-                    category = category_element.text
-                    time = time_element.get_attribute("datetime")
 
                     # Store in a dictionary and add to the list of scraped data
                     scraped_data.append(
                         {
-                            "title": title,
-                            "link": link,
-                            "category": category,
-                            "time": time,
+                            "title_element": title_element,
+                            "link_element": title_element,
+                            "category_element": category_element,
+                            "time_element": time_element
                         }
                     )
 
