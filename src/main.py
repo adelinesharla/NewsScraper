@@ -19,7 +19,6 @@ This script requires that the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.Wo
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-from utils import read_config
 import logging
 
 logging.basicConfig(level=logging.INFO, filename="./logs/main.log")
@@ -30,7 +29,7 @@ def main():
     """Execute the main workflow for web scraping from Reuters.
 
         Steps:
-    1. Reads work items for configuration settings
+    1. Reads work items for configuration settings and inputs
     2. Opens the Reuters website
     3. Searches for a term ("climate change" in this example)
     4. Retrieves the search results
@@ -43,37 +42,34 @@ def main():
     library = WorkItems()
     library.get_input_work_item()
     config = library.get_work_item_variables()
-    #print(config)
-    
-    #config = read_config("./configs/settings.json")
 
     scraper = Scraper(config["settings"])
     extractor = DataExtractor()
+    print("Step 1 done. Got configs and inputs.")
 
     try:
         scraper.open_website()
-        # craper.search_for_term(config.get("search_term"))
-        print(config["search_term"])
-        scraper.open_website()
-        scraper.search_for_term(config["search_term"])
-        print("scraped")
+        print(f"Step 2 done. Opened {config['settings']['base_url']} site")
+        scraper.search_for_term(config['search_term'])
+        print(f"Step 3 done. Searched for  {config['search_term']}")
         search_results = scraper.get_search_results()
-        print("searched results")
+        print(f"Step 4 done. Retrieved the search results")
 
         for result in search_results:
             data = extractor.extract_data(result)
-            print(data)
             extractor.store_data_to_excel(data)
-        print("stored_results")
+        print(f"Step 5 and 6 done. Extracted relevant data from result and stored")
         
-        # Create and save the output work item
         output_work_item_data = {
             "status": "completed",
             "excel_file": extractor.excel_file_name,
         }
         library.create_output_work_item(output_work_item_data)
+        library.save_work_item()
+        print(f"Step 8 done. Writed work items for output")
     finally:
         scraper.close_browser()
+        print(f"Step 9 done. Closed the web browser")
 
 
 if __name__ == "__main__":
