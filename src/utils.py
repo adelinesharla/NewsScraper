@@ -8,19 +8,6 @@ def upload_file(file_path, file_name):
     items.add_file(file_path, name=file_name)
 
 
-def read_config(file_path):
-    """Read JSON configuration from a file and return as a dictionary.
-
-    Parameters:
-        file_path (str): The path to the configuration file.
-
-    Returns:
-        dict: The JSON content parsed into a dictionary.
-    """
-    with open(file_path, "r") as f:
-        return json.load(f)
-
-
 def resilient_action(func):
     """Decorator to add resilience to a function by catching exceptions.
 

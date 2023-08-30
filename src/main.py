@@ -59,6 +59,9 @@ def main():
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
         print(f"Step 5 and 6 done. Extracted relevant data from result and stored")
+
+        library.add_file(extractor.excel_file_path, name=extractor.excel_file_name)
+        print(f"Step 7 done. Uploaded the Excel file to Robocloud Artifacts")
         
         output_work_item_data = {
             "status": "completed",
