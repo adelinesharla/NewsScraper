@@ -46,16 +46,6 @@ def main():
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
         print("Step 5 and 6 done. Extracted and stored relevant data")
-        files = WorkItems()
-        files.set_current_work_item()
-        files.add_work_item_file(extractor.excel_file_path)
-        files.save_work_item()
-
-        files.add_work_item_files("./data/*.png")
-        files.save_work_item()
-        print(
-            f"Step 7 done. Uploaded the Excel and png files to Robocloud Artifacts: {extractor.excel_file_path}"
-        )
 
         output_work_item_data = {
             "status": "completed",
@@ -63,8 +53,10 @@ def main():
         }
 
         library.create_output_work_item(output_work_item_data)
+        library.add_work_item_file(extractor.excel_file_path)
+        library.add_work_item_files("./data/*.png")
         library.save_work_item()
-        print("Step 8 done. Wrote work items for output")
+        print("Step 7 and 8 done. Wrote work items for output, and add files")
 
     except Exception as e:
         print(f"An error occurred: {e}")
