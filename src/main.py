@@ -17,7 +17,7 @@
     and 'RPA.Robocloud.Items' libraries to be installed within the Python environment.
 
     TODO:
-    -Check if assets is better for uplos excel and png files
+    -Check if assets is better for uploads excel and png files
 """
 
 from scraper import Scraper
@@ -51,7 +51,7 @@ def main():
 
         output_work_item_data = {
             "status": "completed",
-            "excel_file": extractor.excel_file_name,
+            "excel_file": extractor.excel_file_path,
         }
 
         library.create_output_work_item(output_work_item_data)

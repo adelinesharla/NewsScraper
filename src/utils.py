@@ -34,6 +34,7 @@ def resilient_action(_func=None, *, retries=3, delay=5):
     TODO:
         - Understand which parameters use in functions, testing and analising
         - Check for more exceptions that could be retried
+        - Check actions to do before retry (for exemplo in open website should close all others first)
     """
 
     def decorator(func):
