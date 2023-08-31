@@ -81,10 +81,12 @@ class Scraper:
 
             # This is a treatement for chrome error 'Element is not clickable at point'
             # but it doesnt affect other browsers
+            self.wait_for(EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button))
             self.browser.driver.execute_script(
                 "arguments[0].scrollIntoView(true);", sb_element
             )
-            sb_element.click()
+            self.browser.driver.execute_script("arguments[0].click();", sb_element)
+            #sb_element.click()
             print(f"Successfully clicked the search button.")
 
             input_field = "input[data-testid='FormField:input']"
@@ -103,8 +105,6 @@ class Scraper:
                 (By.CSS_SELECTOR, input_field),
                 term,
             )
-
-            self.wait_for(EC.element_to_be_clickable, sb_element)
 
             input_element.send_keys(Keys.ENTER)
 
