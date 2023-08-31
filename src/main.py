@@ -47,6 +47,7 @@ def main():
             extractor.store_data_to_excel(data)
         print("Step 5 and 6 done. Extracted and stored relevant data")
         files = WorkItems()
+        files.set_current_work_item()
         files.add_work_item_file(extractor.excel_file_path)
         files.save_work_item()
 
