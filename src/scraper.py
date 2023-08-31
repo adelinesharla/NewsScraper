@@ -168,11 +168,13 @@ class Scraper:
                         )
                     )
 
-                    image_element = wait.until(
+                    div_element = wait.until(
                         lambda driver: self.find_child_element(
                             result, "div[data-testid='Image']"
                         )
                     )
+                    if div_element:
+                        image_element = div_element.find_element(By.TAG_NAME, "img")
 
                     # Store in a dictionary and add to the list of scraped data
                     scraped_data.append(
@@ -185,17 +187,17 @@ class Scraper:
                     )
 
                 all_scraped_data.extend(scraped_data)
-
-                # Check if there's a "Next" button that's not disabled
-                self.wait_for(
-                    EC.presence_of_element_located,
-                    (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
-                ).click()
-                print("Successfully retrieved all search results.")
+                try:
+                    # Check if there's a "Next" button that's not disabled
+                    self.wait_for(
+                        EC.presence_of_element_located,
+                        (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
+                    ).click()
+                except TimeoutException:
+                    print("Successfully retrieved all search results.")
+                    break
         except TimeoutException:
             print("One of the elements was not found in the specified time.")
-        except (NoSuchElementException, WebDriverException):
-            print("Reached the end of the pages or encountered an exception.")
         return all_scraped_data
 
     def close_browser(self):
