@@ -24,6 +24,9 @@ class Scraper:
         search_for_term(term: str): Searches for a term on the website.
         get_search_results(): Retrieves search results.
         close_browser(): Closes all open browser windows.
+    TODO:
+        - On the result page select a news category or section from the Choose the latest (i.e., newest) news
+        - Stop scrapping when month is reached
     """
 
     def __init__(self, config):
@@ -86,7 +89,7 @@ class Scraper:
                 "arguments[0].scrollIntoView(true);", sb_element
             )
             self.browser.driver.execute_script("arguments[0].click();", sb_element)
-            #sb_element.click()
+            # sb_element.click()
             print(f"Successfully clicked the search button.")
 
             input_field = "input[data-testid='FormField:input']"
@@ -145,79 +148,77 @@ class Scraper:
         """
 
         all_scraped_data = []
-        try:
-            while True:
-                # Wait for the search results list to appear
-                self.wait_for(
+        while True:
+            # Wait for the search results list to appear
+            self.wait_for(
+                EC.presence_of_element_located,
+                (By.CSS_SELECTOR, "ul.search-results__list__2SxSK"),
+            )
+            print("Successfully loaded search results.")
+
+            # Find and iterate over each list item in the search results
+            search_results = self.wait_for(
+                EC.presence_of_all_elements_located,
+                (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
+            )
+
+            scraped_data = []
+            wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
+            for result in search_results:
+                title_element = wait.until(
+                    lambda driver: self.find_child_element(
+                        result, "h3[data-testid='Heading'] a"
+                    )
+                )
+                category_element = wait.until(
+                    lambda driver: self.find_child_element(
+                        result, "span[data-testid='Label'] span"
+                    )
+                )
+
+                time_element = wait.until(
+                    lambda driver: self.find_child_element(
+                        result, "time[data-testid='Body']"
+                    )
+                )
+
+                div_element = wait.until(
+                    lambda driver: self.find_child_element(
+                        result, "div[data-testid='Image']"
+                    )
+                )
+                if div_element:
+                    image_element = wait.until(
+                        lambda driver: self.find_child_element(
+                            div_element, "img", By.TAG_NAME
+                        )
+                    )
+
+                # Store in a dictionary and add to the list of scraped data
+                scraped_data.append(
+                    {
+                        "title_element": title_element,
+                        "image_element": image_element,
+                        "category_element": category_element,
+                        "time_element": time_element,
+                    }
+                )
+
+            all_scraped_data.extend(scraped_data)
+            try:
+                # Check if there's a "Next" button that's not disabled
+                next_button = self.wait_for(
                     EC.presence_of_element_located,
-                    (By.CSS_SELECTOR, "ul.search-results__list__2SxSK"),
+                    (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
                 )
-                print("Successfully loaded search results.")
+                if next_button is None:
+                    raise TypeError
+                else:
+                    next_button.click()
+            except (TimeoutException, TypeError):
+                print("Successfully retrieved all search results.")
+                break
 
-                # Find and iterate over each list item in the search results
-                search_results = self.wait_for(
-                    EC.presence_of_all_elements_located,
-                    (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
-                )
-
-                scraped_data = []
-                wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
-                for result in search_results:
-                    title_element = wait.until(
-                        lambda driver: self.find_child_element(
-                            result, "h3[data-testid='Heading'] a"
-                        )
-                    )
-                    category_element = wait.until(
-                        lambda driver: self.find_child_element(
-                            result, "span[data-testid='Label'] span"
-                        )
-                    )
-
-                    time_element = wait.until(
-                        lambda driver: self.find_child_element(
-                            result, "time[data-testid='Body']"
-                        )
-                    )
-
-                    div_element = wait.until(
-                        lambda driver: self.find_child_element(
-                            result, "div[data-testid='Image']"
-                        )
-                    )
-                    if div_element:
-                        image_element = wait.until(
-                            lambda driver: self.find_child_element(
-                                div_element, "img", By.TAG_NAME
-                            )
-                        )
-
-                    # Store in a dictionary and add to the list of scraped data
-                    scraped_data.append(
-                        {
-                            "title_element": title_element,
-                            "image_element": image_element,
-                            "category_element": category_element,
-                            "time_element": time_element,
-                        }
-                    )
-
-                all_scraped_data.extend(scraped_data)
-                try:
-                    # Check if there's a "Next" button that's not disabled
-                    next_button = self.wait_for(
-                        EC.presence_of_element_located,
-                        (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
-                    )
-                    if next_button is None:
-                        raise TypeError
-                    else:
-                        next_button.click()
-                except (TimeoutException, TypeError):
-                    print("Successfully retrieved all search results.")
-                    break
-        except TimeoutException:
-            print("One of the elements was not found in the specified time.")
         return all_scraped_data
 
     def close_browser(self):
