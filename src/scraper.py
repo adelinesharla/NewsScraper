@@ -157,11 +157,17 @@ class Scraper:
             print("Successfully loaded search results.")
 
             # Find and iterate over each list item in the search results
+            
             search_results = self.wait_for(
                 EC.presence_of_all_elements_located,
                 (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
             )
-
+            print("list located")
+            search_results = self.wait_for(
+                EC.visibility_of_all_elements_located,
+                (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
+            )
+            print("list visible")
             scraped_data = []
             wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
             for result in search_results:
@@ -215,10 +221,11 @@ class Scraper:
                     raise TypeError
                 else:
                     next_button.click()
+                    print("clicked next button")
             except (TimeoutException, TypeError):
                 print("Successfully retrieved all search results.")
                 break
-
+        print("finished pagination")
         return all_scraped_data
 
     def close_browser(self):
