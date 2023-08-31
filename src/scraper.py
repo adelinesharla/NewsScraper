@@ -111,11 +111,11 @@ class Scraper:
             
             location = sb_element.location_once_scrolled_into_view()
             self.browser.driver.execute_script(f"window.scrollTo(0, {location});")
-            self.browser.execute_script(
+            self.browser.driver.execute_script(
                 "arguments[0].scrollIntoView(true);", sb_element
             )
             self.wait_for(EC.element_to_be_clickable, sb_element)
-            
+
             input_element.send_keys(Keys.ENTER)
 
             div_search = "div[data-testid='StickyRail']"
