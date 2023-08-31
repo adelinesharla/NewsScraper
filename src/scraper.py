@@ -58,11 +58,11 @@ class Scraper:
             self.browser.open_available_browser(self.config["base_url"], headless=True)
             if self.browser is None:
                 raise NoOpenBrowser
-            logger.info("Successfully opened the website.")
+            print("Successfully opened the website.")
         except NoOpenBrowser as e:
-            logger.error(f"Error opening browser: {e}")
+            print(f"Error opening browser: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            print(f"Unexpected error: {e}")
 
     @resilient_action
     def search_for_term(self, term):
@@ -78,10 +78,10 @@ class Scraper:
             )
 
             if sb_element is None:
-                logger.error("Search button element is None.")
+                print("Search button element is None.")
                 return
             sb_element.click()
-            logger.info(f"Successfully clicked the search button.")
+            print(f"Successfully clicked the search button.")
 
             input_field = "input[data-testid='FormField:input']"
             input_element = self.wait_for(
@@ -89,10 +89,10 @@ class Scraper:
             )
 
             if input_element is None:
-                logger.error("Input field element is None.")
+                print("Input field element is None.")
                 return
             input_element.send_keys(term)
-            logger.info(f"Successfully entered the search term: {term}")
+            print(f"Successfully entered the search term: {term}")
 
             self.wait_for(
                 EC.text_to_be_present_in_element_value,
@@ -114,12 +114,12 @@ class Scraper:
                 (By.CSS_SELECTOR, search_header),
                 f"Search results for “{term}”",
             )
-            logger.info(f"Successfully loaded search results page.")
+            print(f"Successfully loaded search results page.")
 
         except TimeoutException:
-            logger.error("Element not found within the specified time.")
+            print("Element not found within the specified time.")
         except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")
+            print(f"An unexpected error occurred: {e}")
 
     @resilient_action
     def get_search_results(self):
@@ -142,7 +142,7 @@ class Scraper:
                     EC.presence_of_element_located,
                     (By.CSS_SELECTOR, "ul.search-results__list__2SxSK"),
                 )
-                logger.info("Successfully loaded search results.")
+                print("Successfully loaded search results.")
 
                 # Find and iterate over each list item in the search results
                 search_results = self.wait_for(
@@ -187,14 +187,14 @@ class Scraper:
                     EC.presence_of_element_located,
                     (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
                 ).click()
-                logger.info("Successfully retrieved all search results.")
+                print("Successfully retrieved all search results.")
         except TimeoutException:
             logger.warning("One of the elements was not found in the specified time.")
         except (NoSuchElementException, WebDriverException):
-            logger.info("Reached the end of the pages or encountered an exception.")
+            print("Reached the end of the pages or encountered an exception.")
         return all_scraped_data
 
     def close_browser(self):
         """Close all open browser windows."""
         self.browser.close_all_browsers()
-        logger.info("Successfully closed all browser windows.")
+        print("Successfully closed all browser windows.")

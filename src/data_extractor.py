@@ -92,7 +92,7 @@ class DataExtractor:
                 extracted_data["title"] + extracted_data["description"]
             )
         except Exception as e:
-            logging.error(f"Failed to extract data: {e}")
+            print(f"Failed to extract data: {e}")
         return extracted_data
 
     @resilient_action
@@ -135,5 +135,5 @@ class DataExtractor:
                 raise Exception("Excel file doesnt exists")
 
         except Exception as e:
-            logging.error(f"Failed to store data to Excel: {e}")
+            print(f"Failed to store data to Excel: {e}")
             raise Exception(e)
