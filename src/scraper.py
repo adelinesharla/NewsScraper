@@ -58,7 +58,6 @@ class Scraper:
             self.browser.open_available_browser(self.config["base_url"], headless=True)
             if self.browser is None:
                 raise NoOpenBrowser
-            print("teste")
             logger.info("Successfully opened the website.")
         except NoOpenBrowser as e:
             logger.error(f"Error opening browser: {e}")
