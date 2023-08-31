@@ -34,7 +34,7 @@ def resilient_action(_func=None, *, retries=3, delay=5):
     TODO:
         - Understand which parameters use in functions, testing and analising
         - Check for more exceptions that could be retried
-        - Check actions to do before retry (for exemplo in open website should close all others first)
+        - Check actions to do before retry (for example in open website should close all others first)
     """
 
     def decorator(func):
@@ -54,7 +54,8 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                     SessionNotCreatedException,
                     InvalidSessionIdException,
                 ) as e:
-                    print(f"A retryable error occurred: {e}")
+                    print(f"A retryable error occurred: {e} {e.__class__.__name__}")
+                    print(f"A retryable error occurred while executing {func.__name__}")
                     logger.error(
                         f"A retryable error occurred while executing {func.__name__}: {e}"
                     )
@@ -70,7 +71,8 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                             f"Failed after {retries} attempts."
                         )
                 except Exception as e:
-                    print(f"An unrecoverable error occurred: {e}")
+                    print(f"An unrecoverable error occurred: {e} {e.__class__.__name__}")
+                    print(f"An unrecoverable error occurred while executing {func.__name__}")
                     logger.error(
                         f"An unrecoverable error occurred while executing {func.__name__}: {e}"
                     )

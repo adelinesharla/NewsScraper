@@ -162,12 +162,14 @@ class Scraper:
                 EC.presence_of_all_elements_located,
                 (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
             )
-            print("list located")
+            print("Successfully located list")
+
             search_results = self.wait_for(
                 EC.visibility_of_all_elements_located,
                 (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
             )
-            print("list visible")
+            print("Successfully waited for visible list")
+            print(search_results)
             scraped_data = []
             wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
             for result in search_results:
