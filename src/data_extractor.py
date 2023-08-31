@@ -23,7 +23,7 @@ class DataExtractor:
         Stores the extracted data into an Excel file.
 
         TODO
-        3 - count of search phrases in the title and description
+        Count of search phrases in the title and description
     """
 
     excel_file_path = "./data/scraped_data.xlsx"
@@ -112,17 +112,11 @@ class DataExtractor:
             excel = Files()
             if os.path.exists(self.excel_file_path):
                 excel.open_workbook(self.excel_file_path)
-                excel.set_current_worksheet("data")
-                
-                last_row = excel.get_row_count("data") + 1
-
-                col = 1
-                for key in data:
-                    excel.set_cell_value(last_row, col, data[key])
-                    col += 1
+                excel.get_active_worksheet()
+                excel.append_rows_to_worksheet([data])
             else:
                 excel.create_workbook(self.excel_file_path)
-                excel.create_worksheet("data")
+                excel.get_active_worksheet()
                 # fill headers
                 col = 1
                 for header in self.headers:
