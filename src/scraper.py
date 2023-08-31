@@ -40,9 +40,12 @@ class Scraper:
             condition(*args), **kwargs
         )
 
-    def find_child_element(self, parent_element, css_selector):
+    def find_child_element(self, parent_element, locator, selector=None):
         try:
-            return parent_element.find_element(By.CSS_SELECTOR, css_selector)
+            if selector is None:
+                return parent_element.find_element(By.CSS_SELECTOR, locator)
+            else:
+                return parent_element.find_element(selector, locator)
         except:
             return None
 
@@ -75,6 +78,8 @@ class Scraper:
             if sb_element is None:
                 print("Search button element is None.")
                 return
+
+            self.wait_for(EC.element_to_be_clickable, sb_element)
             sb_element.click()
             print(f"Successfully clicked the search button.")
 
@@ -129,7 +134,7 @@ class Scraper:
                 Each dictionary includes 'title', 'link', 'category', and 'time'.
         TODO:
         - On the result page select a news category or section from the Choose the latest (i.e., newest) news
-        - Stop scrapping when month is reached 
+        - Stop scrapping when month is reached
         """
 
         all_scraped_data = []
@@ -174,7 +179,11 @@ class Scraper:
                         )
                     )
                     if div_element:
-                        image_element = div_element.find_element(By.TAG_NAME, "img")
+                        image_element = wait.until(
+                            lambda driver: self.find_child_element(
+                                div_element, "img", By.TAG_NAME
+                            )
+                        )
 
                     # Store in a dictionary and add to the list of scraped data
                     scraped_data.append(
