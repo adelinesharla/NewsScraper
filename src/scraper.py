@@ -83,7 +83,7 @@ class Scraper:
             # but it doesnt affect other browsers
             location = sb_element.location_once_scrolled_into_view()
             self.browser.driver.execute_script(f"window.scrollTo(0, {location});")
-            self.browser.execute_script(
+            self.browser.driver.execute_script(
                 "arguments[0].scrollIntoView(true);", sb_element
             )
             sb_element = self.wait_for(
@@ -108,7 +108,7 @@ class Scraper:
                 (By.CSS_SELECTOR, input_field),
                 term,
             )
-            
+
             location = sb_element.location_once_scrolled_into_view()
             self.browser.driver.execute_script(f"window.scrollTo(0, {location});")
             self.browser.driver.execute_script(
