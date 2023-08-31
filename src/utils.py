@@ -1,6 +1,7 @@
 import functools
 import logging
 import time
+import traceback
 from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
@@ -54,10 +55,14 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                     SessionNotCreatedException,
                     InvalidSessionIdException,
                 ) as e:
-                    print(f"A retryable error occurred: {e} {e.__class__.__name__}")
-                    print(f"A retryable error occurred while executing {func.__name__}")
+                    tb = traceback.extract_tb(e.__traceback__)
+                    last_trace = tb[-1] if tb else None
+                    line = last_trace[1] if last_trace else "Unknown"
+
+
+                    print(f"A retryable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}")
                     logger.error(
-                        f"A retryable error occurred while executing {func.__name__}: {e}"
+                        f"A retryable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}"
                     )
 
                     if attempt < retries:
@@ -71,10 +76,12 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                             f"Failed after {retries} attempts."
                         )
                 except Exception as e:
-                    print(f"An unrecoverable error occurred: {e} {e.__class__.__name__}")
-                    print(f"An unrecoverable error occurred while executing {func.__name__}")
+                    tb = traceback.extract_tb(e.__traceback__)
+                    last_trace = tb[-1] if tb else None
+                    line = last_trace[1] if last_trace else "Unknown"
+                    print(f"An unrecoverable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}")
                     logger.error(
-                        f"An unrecoverable error occurred while executing {func.__name__}: {e}"
+                        f"An unrecoverable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}"
                     )
                     raise e
         return wrapper
