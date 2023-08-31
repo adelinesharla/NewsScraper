@@ -1,7 +1,6 @@
 from RPA.Browser.Selenium import Selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 from SeleniumLibrary.errors import NoOpenBrowser
 from selenium.webdriver.common.keys import Keys
@@ -60,10 +59,9 @@ class Scraper:
             if self.browser is None:
                 raise NoOpenBrowser
             print("Successfully opened the website.")
-        except NoOpenBrowser as e:
-            print(f"Error opening browser: {e}")
-        except Exception as e:
-            print(f"Unexpected error: {e}")
+        # Apearently I dont need to worry on this error always
+        except TimeoutException as e:
+            print(f"A not so important error (hoppefully) ocurred: {e}")
 
     @resilient_action
     def search_for_term(self, term):
@@ -89,14 +87,14 @@ class Scraper:
                 "arguments[0].scrollIntoView(true);", sb_element
             )
             self.browser.driver.execute_script("arguments[0].click();", sb_element)
-            # sb_element.click()
+
             print(f"Successfully clicked the search button.")
 
             input_field = "input[data-testid='FormField:input']"
+
             input_element = self.wait_for(
                 EC.presence_of_element_located, (By.CSS_SELECTOR, input_field)
             )
-
             if input_element is None:
                 print("Input field element is None.")
                 return
@@ -108,14 +106,18 @@ class Scraper:
                 (By.CSS_SELECTOR, input_field),
                 term,
             )
-
             input_element.send_keys(Keys.ENTER)
+            print(f"Successfully sended the search term: {term}")
 
             div_search = "div[data-testid='StickyRail']"
-            self.wait_for(EC.presence_of_element_located, (By.CSS_SELECTOR, div_search))
+            self.wait_for(
+                EC.presence_of_element_located, (By.CSS_SELECTOR, div_search)
+            )
+
+            print(f"Successfully loaded results box")
 
             search_header = "h1[data-testid='Heading']"
-            self.wait_for(
+            head_element = self.wait_for(
                 EC.presence_of_element_located, (By.CSS_SELECTOR, search_header)
             )
 
@@ -124,12 +126,12 @@ class Scraper:
                 (By.CSS_SELECTOR, search_header),
                 f"Search results for “{term}”",
             )
+            self.wait_for(EC.visibility_of, head_element)
+
             print(f"Successfully loaded search results page.")
 
-        except TimeoutException:
-            print("Element not found within the specified time.")
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"An unexpected error occurred in search_terms function: {e}")
 
     @resilient_action
     def get_search_results(self):
@@ -157,7 +159,7 @@ class Scraper:
             print("Successfully loaded search results.")
 
             # Find and iterate over each list item in the search results
-            
+
             search_results = self.wait_for(
                 EC.presence_of_all_elements_located,
                 (By.CSS_SELECTOR, "li.search-results__item__2oqiX"),
@@ -172,6 +174,7 @@ class Scraper:
             print(search_results)
             scraped_data = []
             wait = WebDriverWait(self.browser.driver, self.config["wait_time"])
+            iterations_page = len(search_results)
             for result in search_results:
                 title_element = wait.until(
                     lambda driver: self.find_child_element(
@@ -211,7 +214,8 @@ class Scraper:
                         "time_element": time_element,
                     }
                 )
-
+            iterations_page = iterations_page - 1
+            print(f"{iterations_page} news remaining for this page.")
             all_scraped_data.extend(scraped_data)
             try:
                 # Check if there's a "Next" button that's not disabled
@@ -227,7 +231,7 @@ class Scraper:
             except (TimeoutException, TypeError):
                 print("Successfully retrieved all search results.")
                 break
-        print("finished pagination")
+        print("Successfully finished pagination")
         return all_scraped_data
 
     def close_browser(self):
