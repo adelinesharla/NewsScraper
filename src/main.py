@@ -29,6 +29,7 @@ def main():
     """Execute the main workflow for web scraping from Reuters."""
     library = WorkItems()
     library.get_input_work_item()
+    library.create_output_work_item()
     config = library.get_work_item_variables()
     scraper = Scraper(config["settings"])
     extractor = DataExtractor()
@@ -48,16 +49,8 @@ def main():
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
         print("Step 5 and 6 done. Extracted and stored relevant data")
-
-        output_work_item_data = {
-            "status": "completed",
-            "excel_file": extractor.excel_file_path,
-        }
-
-        library.create_output_work_item(output_work_item_data)
         library.add_work_item_file(extractor.excel_file_path)
         library.add_work_item_files("./data/*.png")
-        library.save_work_item()
         print("Step 7 and 8 done. Wrote work items for output, and add files")
 
     except Exception as e:
@@ -65,7 +58,9 @@ def main():
 
     finally:
         scraper.close_browser()
-        print("Step 9 done. Closed the web browser")
+        library.add_work_item_files("./logs/*.log")
+        library.save_work_item()
+        print("Step 9 done. Closed the web browser and output logs")
 
 
 if __name__ == "__main__":
