@@ -184,7 +184,7 @@ class Scraper:
                 ).click()
                 print("Successfully retrieved all search results.")
         except TimeoutException:
-            logger.warning("One of the elements was not found in the specified time.")
+            print("One of the elements was not found in the specified time.")
         except (NoSuchElementException, WebDriverException):
             print("Reached the end of the pages or encountered an exception.")
         return all_scraped_data
