@@ -4,6 +4,7 @@ import re
 from requests import get
 from uuid import uuid4
 import os
+import logging
 
 
 class DataExtractor:
@@ -20,25 +21,32 @@ class DataExtractor:
         TODO
         Count of search phrases in the title and description
     """
-    robot_root = os.environ.get('ROBOT_ROOT')
-    excel_file_path = f"{robot_root}/data/scraped_data.xlsx"
-    excel_file_name = "scraped_data.xlsx"
-    headers = ["title", "money_pattern", "image", "date", "category"]
+
+    def __init__(self, excel_file_path=None):
+        self.robot_root = os.environ.get("ROBOT_ROOT", ".")
+        self.excel_file_path = excel_file_path or os.path.join(
+            self.robot_root, "data", "scraped_data.xlsx"
+        )
+        self.headers = ["title", "money_pattern", "image", "date", "category"]
+
+    def ensure_dir_exists(self, dir_path):
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
 
     def process_image(self, url):
-        response = get(url)
-        id = uuid4()
-        file_path = f"{self.robot_root}/data/image_{id}.png"
-        file_name = f"image_{id}.png"
-        if not os.path.exists("./data"):
-            os.makedirs("./data")
-        if response.status_code == 200:
+        try:
+            response = get(url)
+            response.raise_for_status()
+            id = uuid4()
+            file_path = os.path.join(self.robot_root, "data", f"image_{id}.png")
+            file_name = f"image_{id}.png"
+            self.ensure_dir_exists(os.path.dirname(file_path))
             with open(file_path, "wb") as f:
                 f.write(response.content)
-        else:
-            print(f"Failed to download image, status code: {response.status_code}")
-        # upload_file(file_path, file_name)
-        return file_name
+            return file_name
+        except Exception as e:
+            logging.error(f"Failed to download image: {e}")
+            raise e
 
     def contains_money_patterns(self, input_str):
         patterns = [
@@ -70,26 +78,23 @@ class DataExtractor:
             A dictionary containing the extracted data, such as title, date, and description.
         """
         extracted_data = {}
-        try:
-            title_element = search_result.get("title_element")
-            time_element = search_result.get("time_element")
-            category_element = search_result.get("category_element")
-            image_element = search_result.get("image_element")
+        title_element = search_result.get("title_element")
+        time_element = search_result.get("time_element")
+        category_element = search_result.get("category_element")
+        image_element = search_result.get("image_element")
 
-            if title_element:
-                extracted_data["title"] = title_element.text
-                extracted_data["money_pattern"] = self.contains_money_patterns(
-                    extracted_data["title"]
-                )
-            if image_element:
-                filename = self.process_image(image_element.get_attribute("src"))
-                extracted_data["image"] = filename
-            if time_element:
-                extracted_data["date"] = time_element.get_attribute("datetime")
-            if category_element:
-                extracted_data["category"] = category_element.text
-        except Exception as e:
-            print(f"Failed to extract data: {e}")
+        if title_element:
+            extracted_data["title"] = title_element.text
+            extracted_data["money_pattern"] = self.contains_money_patterns(
+                extracted_data["title"]
+            )
+        if image_element:
+            filename = self.process_image(image_element.get_attribute("src"))
+            extracted_data["image"] = filename
+        if time_element:
+            extracted_data["date"] = time_element.get_attribute("datetime")
+        if category_element:
+            extracted_data["category"] = category_element.text
         return extracted_data
 
     @resilient_action
@@ -105,34 +110,27 @@ class DataExtractor:
         --------
         None
         """
+        self.ensure_dir_exists(os.path.dirname(self.excel_file_path))
+
+        excel = Files()
         try:
-            excel = Files()
             if os.path.exists(self.excel_file_path):
                 excel.open_workbook(self.excel_file_path)
                 excel.get_active_worksheet()
                 excel.append_rows_to_worksheet([data])
             else:
-                if not os.path.exists("./data"):
-                    os.makedirs("./data")
                 excel.create_workbook(self.excel_file_path)
                 excel.get_active_worksheet()
-                # fill headers
-                col = 1
-                for header in self.headers:
+                # Fill headers
+                for col, header in enumerate(self.headers, start=1):
                     excel.set_cell_value(1, col, header)
-                    col += 1
 
-                # fill data
-                col = 1
-                for key in data:
+                # Fill data
+                for col, key in enumerate(data.keys(), start=1):
                     excel.set_cell_value(2, col, data[key])
-                    col += 1
 
             excel.save_workbook()
             excel.close_workbook()
-            if not os.path.exists(self.excel_file_path):
-                raise Exception("Excel file doesnt exists")
-
         except Exception as e:
-            print(f"Failed to store data to Excel: {e}")
-            raise Exception(e)
+            logging.error(f"An error occurred while saving to Excel: {e}")
+            raise e

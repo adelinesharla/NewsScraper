@@ -1,26 +1,28 @@
 """Web scraper for extracting news data from Reuters.
 
-This script uses the Scraper and DataExtractor classes to perform web scraping.
-The script performs the following tasks:
+    This script uses the Scraper and DataExtractor classes to perform web scraping.
+    The script performs the following tasks:
 
-1. Reads work items for configuration settings
-2. Opens the Reuters website
-3. Searches for a term ("climate change" in this example)
-4. Retrieves the search results
-5. Extracts relevant data from each result
-6. Stores the extracted data in an Excel file
-7. Uploads the Excel file to Robocloud Artifacts
-8. Writes work items for output
-9. Closes the web browser
+    1. Reads work items for configuration settings
+    2. Opens the Reuters website
+    3. Searches for a term ("climate change" in this example)
+    4. Retrieves the search results
+    5. Extracts relevant data from each result
+    6. Stores the extracted data in an Excel file
+    7. Uploads the Excel file to Robocloud Artifacts
+    8. Writes work items for output
+    9. Closes the web browser
 
-This script requires the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.WorkItems', 
-and 'RPA.Robocloud.Items' libraries to be installed within the Python environment.
+    This script requires the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.WorkItems', 
+    and 'RPA.Robocloud.Items' libraries to be installed within the Python environment.
+
+    TODO:
+    -Check if assets is better for uplos excel and png files
 """
 
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-import os
 
 
 def main():

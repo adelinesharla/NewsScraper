@@ -1,7 +1,7 @@
 {
     "settings": {
         "base_url": "https://www.reuters.com/",
-        "wait_time": 10
+        "wait_time": 5
     },
     "search_term": "brazil womens",
     "mounth_number": 3,
