@@ -82,10 +82,9 @@ class Scraper:
             # This is a treatement for chrome error 'Element is not clickable at point'
             # but it doesnt affect other browsers
             self.browser.driver.execute_script(
-                "window.scrollTo(0, {});".format(sb_element.location["y"])
+                "arguments[0].scrollIntoView(true);", sb_element
             )
 
-            # self.wait_for(EC.element_to_be_clickable, sb_element)
             sb_element.click()
             print(f"Successfully clicked the search button.")
 
