@@ -17,24 +17,23 @@ from selenium.common.exceptions import (
 logging.basicConfig(level=logging.ERROR, filename="./logs/errors.log")
 logger = logging.getLogger("ResilientDecorator")
 
-
 class MaxRetriesReachedError(Exception):
     """Exception raised when the maximum number of retries is reached."""
-
     pass
 
-
-def resilient_action(retries=3, delay=5):
+def resilient_action(_func=None, *, retries=3, delay=5):
     """Decorator to add resilience to a function by catching exceptions.
 
-    This decorator catches any exceptions that occur when executing the wrapped function.
-    Additional resilience logic retries added.
-
     Args:
-        func (callable): The function to wrap.
+        retries (int, optional): Number of retry attempts. Default is 3.
+        delay (int, optional): Delay in seconds between retries. Default is 5.
 
     Returns:
         callable: The wrapped function with added resilience.
+
+    TODO:
+        - Understand which parameters use in functions, testing and analising
+        - Check for more exceptions that could be retried
     """
 
     def decorator(func):
@@ -70,11 +69,15 @@ def resilient_action(retries=3, delay=5):
                             f"Failed after {retries} attempts."
                         )
                 except Exception as e:
-                    # If an exception other than the ones listed occurs, raise it and terminate the script.
                     print(f"An unrecoverable error occurred: {e}")
                     logger.error(
                         f"An unrecoverable error occurred while executing {func.__name__}: {e}"
                     )
-                    raise e  # Raising the exception will terminate the script
-
+                    raise e
         return wrapper
+    
+    if _func is None:
+        return decorator
+    else:
+        return decorator(_func)
+
