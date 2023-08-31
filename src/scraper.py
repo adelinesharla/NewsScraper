@@ -72,14 +72,20 @@ class Scraper:
         try:
             search_button = "button[data-testid='Button']"
             sb_element = self.wait_for(
-                EC.presence_of_element_located, (By.CSS_SELECTOR, search_button)
+                EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button)
             )
 
             if sb_element is None:
                 print("Search button element is None.")
                 return
 
-            self.wait_for(EC.element_to_be_clickable, sb_element)
+            # This is a treatement for chrome error 'Element is not clickable at point'
+            # but it doesnt affect other browsers
+            self.browser.driver.execute_script(
+                "window.scrollTo(0, {});".format(sb_element.location["y"])
+            )
+
+            # self.wait_for(EC.element_to_be_clickable, sb_element)
             sb_element.click()
             print(f"Successfully clicked the search button.")
 
@@ -99,6 +105,7 @@ class Scraper:
                 (By.CSS_SELECTOR, input_field),
                 term,
             )
+            self.wait_for(EC.element_to_be_clickable, sb_element)
             input_element.send_keys(Keys.ENTER)
 
             div_search = "div[data-testid='StickyRail']"
@@ -198,11 +205,15 @@ class Scraper:
                 all_scraped_data.extend(scraped_data)
                 try:
                     # Check if there's a "Next" button that's not disabled
-                    self.wait_for(
+                    next_button = self.wait_for(
                         EC.presence_of_element_located,
                         (By.CSS_SELECTOR, "button[aria-label^='Next stories']"),
-                    ).click()
-                except TimeoutException:
+                    )
+                    if next_button is None:
+                        raise TypeError
+                    else:
+                        next_button.click()
+                except (TimeoutException, TypeError):
                     print("Successfully retrieved all search results.")
                     break
         except TimeoutException:
