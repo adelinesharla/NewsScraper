@@ -20,15 +20,15 @@ class DataExtractor:
         TODO
         Count of search phrases in the title and description
     """
-
-    excel_file_path = "./data/scraped_data.xlsx"
+    robot_root = os.environ.get('ROBOT_ROOT')
+    excel_file_path = f"{robot_root}/data/scraped_data.xlsx"
     excel_file_name = "scraped_data.xlsx"
     headers = ["title", "money_pattern", "image", "date", "category"]
 
     def process_image(self, url):
         response = get(url)
         id = uuid4()
-        file_path = f"./data/image_{id}.png"
+        file_path = f"{self.robot_root}/data/image_{id}.png"
         file_name = f"image_{id}.png"
         if response.status_code == 200:
             with open(file_path, "wb") as f:
