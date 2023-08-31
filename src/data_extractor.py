@@ -23,7 +23,7 @@ class DataExtractor:
 
     excel_file_path = "./data/scraped_data.xlsx"
     excel_file_name = "scraped_data.xlsx"
-    headers = ["title", "image", "date", "description", "money_pattern"]
+    headers = ["title", "image", "date", "category", "money_pattern"]
 
     def process_image(self, url):
         response = get(url)
@@ -70,22 +70,22 @@ class DataExtractor:
         extracted_data = {}
         try:
             title_element = search_result.get("title_element")
-            date_element = search_result.get("date_element")
-            description_element = search_result.get("description_element")
-            link_element = search_result.get("link_element")
+            time_element = search_result.get("time_element")
+            category_element = search_result.get("category_element")
+            image_element = search_result.get("image_element")
 
             if title_element:
                 extracted_data["title"] = title_element.text
-            if link_element:
-                filename = self.process_image(link_element.get_attribute("href"))
+                extracted_data["money_pattern"] = self.contains_money_patterns(
+                    extracted_data["title"]
+                )
+            if image_element:
+                filename = self.process_image(image_element.get_attribute("src"))
                 extracted_data["image"] = filename
-            if date_element:
-                extracted_data["date"] = date_element.get_attribute("datetime")
-            if description_element:
-                extracted_data["description"] = description_element.text
-            extracted_data["money_pattern"] = self.contains_money_patterns(
-                extracted_data["title"] + extracted_data["description"]
-            )
+            if time_element:
+                extracted_data["date"] = time_element.get_attribute("datetime")
+            if category_element:
+                extracted_data["category"] = category_element.text
         except Exception as e:
             print(f"Failed to extract data: {e}")
         return extracted_data

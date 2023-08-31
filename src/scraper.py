@@ -127,6 +127,9 @@ class Scraper:
         Returns:
             list: A list of dictionaries containing the scraped data for each search result.
                 Each dictionary includes 'title', 'link', 'category', and 'time'.
+        TODO:
+        - On the result page select a news category or section from the Choose the latest (i.e., newest) news
+        - Stop scrapping when month is reached 
         """
 
         all_scraped_data = []
@@ -165,11 +168,17 @@ class Scraper:
                         )
                     )
 
+                    image_element = wait.until(
+                        lambda driver: self.find_child_element(
+                            result, "div[data-testid='Image']"
+                        )
+                    )
+
                     # Store in a dictionary and add to the list of scraped data
                     scraped_data.append(
                         {
                             "title_element": title_element,
-                            "link_element": title_element,
+                            "image_element": image_element,
                             "category_element": category_element,
                             "time_element": time_element,
                         }
