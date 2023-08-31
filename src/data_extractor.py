@@ -23,7 +23,7 @@ class DataExtractor:
 
     excel_file_path = "./data/scraped_data.xlsx"
     excel_file_name = "scraped_data.xlsx"
-    headers = ["title", "image", "date", "category", "money_pattern"]
+    headers = ["title", "money_pattern", "image", "date", "category"]
 
     def process_image(self, url):
         response = get(url)

@@ -72,7 +72,7 @@ class Scraper:
         try:
             search_button = "button[data-testid='Button']"
             sb_element = self.wait_for(
-                EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button)
+                EC.presence_of_element_located, (By.CSS_SELECTOR, search_button)
             )
 
             if sb_element is None:
@@ -81,10 +81,14 @@ class Scraper:
 
             # This is a treatement for chrome error 'Element is not clickable at point'
             # but it doesnt affect other browsers
-            self.browser.driver.execute_script(
+            location = sb_element.location_once_scrolled_into_view()
+            self.browser.driver.execute_script(f"window.scrollTo(0, {location});")
+            self.browser.execute_script(
                 "arguments[0].scrollIntoView(true);", sb_element
             )
-
+            sb_element = self.wait_for(
+                EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button)
+            )
             sb_element.click()
             print(f"Successfully clicked the search button.")
 
@@ -104,7 +108,14 @@ class Scraper:
                 (By.CSS_SELECTOR, input_field),
                 term,
             )
+            
+            location = sb_element.location_once_scrolled_into_view()
+            self.browser.driver.execute_script(f"window.scrollTo(0, {location});")
+            self.browser.execute_script(
+                "arguments[0].scrollIntoView(true);", sb_element
+            )
             self.wait_for(EC.element_to_be_clickable, sb_element)
+            
             input_element.send_keys(Keys.ENTER)
 
             div_search = "div[data-testid='StickyRail']"
