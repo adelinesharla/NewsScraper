@@ -62,11 +62,10 @@ class Scraper:
     @resilient_action
     def search_for_term(self, term):
         """Search for a term on the website.
+
         Parameters:
             term (str): The search term to be entered into the search bar.
         """
-
-        # Locate the search button
         search_button = "button[data-testid='Button']"
         sb_element = self.wait_for(
             EC.visibility_of_element_located, (By.CSS_SELECTOR, search_button)
@@ -76,15 +75,16 @@ class Scraper:
             print("Search button element is None.")
             return
 
-        # Scroll and click the search button
+        # This is a treatement for chrome error 'Element is not clickable at point'
+        # but it doesnt affect other browsers
         self.wait_for(EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button))
         self.browser.driver.execute_script(
             "arguments[0].scrollIntoView(true);", sb_element
         )
         self.browser.driver.execute_script("arguments[0].click();", sb_element)
-        print("Successfully clicked the search button.")
 
-        # Locate and fill the search input field
+        print(f"Successfully clicked the search button.")
+
         input_field = "input[data-testid='FormField:input']"
         input_element = self.wait_for(
             EC.presence_of_element_located, (By.CSS_SELECTOR, input_field)
@@ -93,30 +93,30 @@ class Scraper:
         if input_element is None:
             print("Input field element is None.")
             return
+        
         input_element.send_keys(term)
         print(f"Successfully entered the search term: {term}")
 
-        # Wait for the search term to appear in the input field
         self.wait_for(
             EC.text_to_be_present_in_element_value,
             (By.CSS_SELECTOR, input_field),
             term,
         )
+        self.wait_for(EC.element_to_be_clickable, (By.CSS_SELECTOR, search_button))
         input_element.send_keys(Keys.ENTER)
 
-        # Wait for the search results to appear
         div_search = "div[data-testid='StickyRail']"
         self.wait_for(EC.presence_of_element_located, (By.CSS_SELECTOR, div_search))
 
-        # Validate the search header
         search_header = "h1[data-testid='Heading']"
         self.wait_for(EC.presence_of_element_located, (By.CSS_SELECTOR, search_header))
+
         self.wait_for(
             EC.text_to_be_present_in_element_value,
             (By.CSS_SELECTOR, search_header),
             f"Search results for “{term}”",
         )
-        print("Successfully loaded search results page.")
+        print(f"Successfully loaded search results page.")
 
     @resilient_action
     def get_search_results(self):
