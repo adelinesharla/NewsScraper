@@ -20,11 +20,7 @@ and 'RPA.Robocloud.Items' libraries to be installed within the Python environmen
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
-import logging
 import os
-
-logging.basicConfig(level=logging.INFO, filename="./logs/main.log")
-logger = logging.getLogger("Main")
 
 
 def main():

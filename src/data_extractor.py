@@ -1,14 +1,9 @@
 from RPA.Excel.Files import Files
 from utils import resilient_action
-import logging
 import re
 from requests import get
 from uuid import uuid4
 import os
-
-# Configure logging to capture into a file
-logging.basicConfig(level=logging.INFO, filename="./logs/data_extractor.log")
-logger = logging.getLogger("DataExtractor")
 
 
 class DataExtractor:
