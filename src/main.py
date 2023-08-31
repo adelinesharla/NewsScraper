@@ -29,18 +29,18 @@ def main():
     """Execute the main workflow for web scraping from Reuters."""
     library = WorkItems()
     library.get_input_work_item()
+    inputs = library.get_work_item_variables()
     library.create_output_work_item()
-    config = library.get_work_item_variables()
-    scraper = Scraper(config["settings"])
+    scraper = Scraper(inputs["settings"])
     extractor = DataExtractor()
     print("Step 1 done. Retrieved configs and inputs.")
 
     try:
         scraper.open_website()
-        print(f"Step 2 done. Opened {config['settings']['base_url']} site")
+        print(f"Step 2 done. Opened {inputs['settings']['base_url']} site")
 
-        scraper.search_for_term(config["search_term"])
-        print(f"Step 3 done. Searched for {config['search_term']}")
+        scraper.search_for_term(inputs["search_term"])
+        print(f"Step 3 done. Searched for {inputs['search_term']}")
 
         search_results = scraper.get_search_results()
         print(f"Step 4 done. Retrieved the search results: {search_results}")
