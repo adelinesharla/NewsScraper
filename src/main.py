@@ -46,12 +46,14 @@ def main():
             data = extractor.extract_data(result)
             extractor.store_data_to_excel(data)
         print("Step 5 and 6 done. Extracted and stored relevant data")
+        files = WorkItems()
+        files.add_work_item_file(extractor.excel_file_path)
+        files.save_work_item()
 
-        library.add_work_item_file(
-            extractor.excel_file_path, name=extractor.excel_file_name
-        )
+        files.add_work_item_files("./data/*.png")
+        files.save_work_item()
         print(
-            f"Step 7 done. Uploaded the Excel file to Robocloud Artifacts: {extractor.excel_file_path}"
+            f"Step 7 done. Uploaded the Excel and png files to Robocloud Artifacts: {extractor.excel_file_path}"
         )
 
         output_work_item_data = {

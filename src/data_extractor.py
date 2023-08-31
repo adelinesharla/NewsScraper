@@ -30,6 +30,8 @@ class DataExtractor:
         id = uuid4()
         file_path = f"{self.robot_root}/data/image_{id}.png"
         file_name = f"image_{id}.png"
+        if not os.path.exists("./data"):
+            os.makedirs("./data")
         if response.status_code == 200:
             with open(file_path, "wb") as f:
                 f.write(response.content)
@@ -110,6 +112,8 @@ class DataExtractor:
                 excel.get_active_worksheet()
                 excel.append_rows_to_worksheet([data])
             else:
+                if not os.path.exists("./data"):
+                    os.makedirs("./data")
                 excel.create_workbook(self.excel_file_path)
                 excel.get_active_worksheet()
                 # fill headers
