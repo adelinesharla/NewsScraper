@@ -7,11 +7,12 @@
     2. Opens the Reuters website
     3. Searches for a term ("climate change" in this example)
     4. Retrieves the search results
-    5. Extracts relevant data from each result
-    6. Stores the extracted data in an Excel file
-    7. Uploads the Excel file to Robocloud Artifacts
-    8. Writes work items for output
-    9. Closes the web browser
+    5. Filter results by category and months
+    6. Extracts relevant data from each result
+    7. Stores the extracted data in an Excel file
+    8. Uploads the Excel file to Robocloud Artifacts
+    9. Writes work items for output
+    10. Closes the web browser
 
     This script requires the 'RPA.Browser.Selenium', 'pandas', 'RPA.Robocorp.WorkItems', 
     and 'RPA.Robocloud.Items' libraries to be installed within the Python environment.
@@ -45,25 +46,31 @@ def main():
     inputs = library.get_work_item_variables()
     library.create_output_work_item()
     scraper = Scraper(inputs["settings"])
-    extractor = DataExtractor()
+    extractor = DataExtractor(
+        inputs["search_term"], inputs["category"], inputs["month_number"]
+    )
     logger.info("Step 1 done. Retrieved configs and inputs.")
 
     try:
         scraper.open_website()
         logger.info(f"Step 2 done. Opened {inputs['settings']['base_url']} site")
 
-        scraper.search_for_term(inputs["search_term"])
-        logger.info(f"Step 3 done. Searched for {inputs['search_term']}")
+        scraper.search_for_term_by_category(inputs["search_term"], inputs["category"])
+        logger.info(
+            f"Step 3  and 4 done. Searched for {inputs['search_term']} and by category {inputs['category']}"
+        )
 
         data = []
         scraped_iterations = 1
         while True:
-            search_results = scraper.get_search_results()
+            search_results = scraper.get_page_results()
             scraped_results = scraper.scrapy_page(search_results)
             logger.info(
-                f"Step 4.{scraped_iterations} done. Retrieved the search results: {search_results}"
+                f"Step 5.{scraped_iterations} done. Retrieved {len(search_results)} search results"
             )
-            data = data + extractor.extract_from_page(scraped_results)
+            data_extracted = extractor.extract_from_page(scraped_results)
+            if len(data_extracted) > 0:
+                data = data + data_extracted
             if scraper.go_to_next_page():
                 pass
             else:
@@ -73,19 +80,19 @@ def main():
 
         for item in data:
             extractor.store_data_to_excel(item)
-        logger.info("Step 5 and 6 done. Extracted and stored relevant data")
+        logger.info("Step 6 and 7 done. Extracted and stored relevant data")
         library.add_work_item_file(extractor.excel_file_path)
         library.add_work_item_files("./data/*.png")
-        logger.info("Step 7 and 8 done. Wrote work items for output, and add files")
+        logger.info("Step 8 and 9 done. Wrote work items for output, and add files")
 
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.critical(f"An critical error occurred and stopped the steps: {e}")
 
     finally:
         scraper.close_browser()
         library.add_work_item_files("./logs/*.log")
         library.save_work_item()
-        logger.info("Step 9 done. Closed the web browser and output logs file")
+        logger.info("Step 10 done. Closed the web browser and output logs file")
 
 
 if __name__ == "__main__":

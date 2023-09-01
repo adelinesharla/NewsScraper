@@ -2,26 +2,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.wait import WebDriverWait
 from utils import resilient_action
 import logging
+from page import Page
 
 logger = logging.getLogger(__name__)
 
 
-class MainPage:
+class MainPage(Page):
     SEARCH_BUTTON = "button[data-testid='Button']"
     SCROLL_INTO = "arguments[0].scrollIntoView(true);"
     INPUT_FIELD = "input[data-testid='FormField:input']"
-
-    def __init__(self, browser, config):
-        self.browser = browser
-        self.config = config
-
-    def wait_for(self, condition, *args, **kwargs):
-        return WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
-            condition(*args), **kwargs
-        )
 
     @resilient_action
     def verify_search_button(self):

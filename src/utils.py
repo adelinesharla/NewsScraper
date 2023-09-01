@@ -2,6 +2,7 @@ import functools
 import logging
 import time
 import traceback
+import os
 from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
@@ -14,9 +15,9 @@ from selenium.common.exceptions import (
     InvalidSessionIdException,
 )
 import logging
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
-
 
 
 class MaxRetriesReachedError(Exception):
@@ -44,6 +45,11 @@ def resilient_action(_func=None, *, retries=3, delay=10):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            try:
+                browser = args[0].browser
+                has_browser = True
+            except AttributeError:
+                has_browser = False
             for attempt in range(1, retries + 1):
                 try:
                     return func(*args, **kwargs)
@@ -75,10 +81,16 @@ def resilient_action(_func=None, *, retries=3, delay=10):
                         raise MaxRetriesReachedError(
                             f"Failed after {retries} attempts."
                         )
-                except Exception as e:
+                except (MaxRetriesReachedError, Exception) as e:
                     tb = traceback.extract_tb(e.__traceback__)
                     last_trace = tb[-1] if tb else None
                     line = last_trace[1] if last_trace else "Unknown"
+                    id = uuid4()
+                    if has_browser:
+                        file_path = os.path.join(
+                            "." "logs", f"screenshot_on_error_{id}.png"
+                        )
+                        browser.driver.save_screenshot(file_path)
                     logger.error(
                         f"An unrecoverable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}"
                     )

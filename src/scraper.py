@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Scraper:
     """Web scraper class for interacting with a website using Selenium.
 
@@ -23,8 +24,9 @@ class Scraper:
         get_search_results(): Retrieves search results.
         close_browser(): Closes all open browser windows.
     TODO:
-        - On the result page select a news category or section from the Choose the latest (i.e., newest) news
-        - Stop scrapping when month is reached
+        - Some news has carrosels or videos instead of images, this is not covered here
+        - Fix click_category_selection in result_page to use in search_for_term_by_category
+        - Check why some news are not being scrape except for the category
     """
 
     def __init__(self, config):
@@ -48,7 +50,7 @@ class Scraper:
         except TimeoutException as e:
             logger.warning(f"A potentially non-critical error occurred: {e}")
 
-    def search_for_term(self, term):
+    def search_for_term_by_category(self, term, category):
         """Search for a term on the website.
 
         Parameters:
@@ -58,11 +60,12 @@ class Scraper:
         self.main_page.click_search_button(sb_element)
         is_element = self.main_page.input_search_field(term)
         self.main_page.click_to_search(term, is_element)
-        self.result_page.verify_results()
+        return None
 
     @resilient_action
-    def get_search_results(self):
+    def get_page_results(self):
         self.result_page.verify_item_list()
+        self.result_page.verify_results()
         return self.result_page.get_item_list()
 
     @resilient_action

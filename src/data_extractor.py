@@ -5,6 +5,7 @@ from requests import get
 from uuid import uuid4
 import os
 import logging
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +21,38 @@ class DataExtractor:
     store_data_to_excel(data: dict) -> None:
         Stores the extracted data into an Excel file.
 
-        TODO
-        Count of search phrases in the title and description
+        - On the result page select a news category or section from the Choose the latest (i.e., newest) news
+        - Stop scrapping when limit month is reached
     """
 
-    def __init__(self, excel_file_path=None):
+    def __init__(self, term, category, month_number, excel_file_path=None):
         self.robot_root = os.environ.get("ROBOT_ROOT", ".")
         self.excel_file_path = excel_file_path or os.path.join(
             self.robot_root, "data", "scraped_data.xlsx"
         )
-        self.headers = ["money_pattern", "title", "image", "date", "category"]
+        self.headers = [
+            "money_pattern",
+            "count_term",
+            "title",
+            "image",
+            "date",
+        ]
+        self.categorys = [
+            "All",
+            "World",
+            "Business",
+            "Legal",
+            "Markets",
+            "Breakingviews",
+            "Technology",
+            "Sustainability",
+            "Science",
+            "Sports",
+            "Lifestyle",
+        ]
+        self.term = term
+        self.category = category
+        self.month_number = month_number
 
     def ensure_dir_exists(self, dir_path):
         if not os.path.exists(dir_path):
@@ -65,11 +88,34 @@ class DataExtractor:
         else:
             return False
 
+    def count_searched_term(self, title):
+        return title.lower().count(self.term.lower())
+
     def extract_from_page(self, page):
         data = []
         for item in page:
-            data.append(self.extract_data(item))
+            extract = self.extract_data(item)
+            if extract is not None:
+                data.append()
         return data
+
+    def is_date_in_range(self, date_time_str):
+        try:
+            date_time = datetime.strptime(date_time_str, "%Y-%m-%dT%H:%M:%SZ")
+            date_time = date_time.replace(tzinfo=timezone.utc)
+        except ValueError:
+            # Handle other date formats or raise an error
+            return False
+
+        current_time = datetime.now(timezone.utc)
+        earliest_date_in_range = current_time.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        ) - timedelta(days=(self.month_number - 1) * 30)
+
+        return earliest_date_in_range <= date_time <= current_time
+
+    def is_in_category_defined(self, category):
+        return self.category == category
 
     @resilient_action
     def extract_data(self, search_result):
@@ -82,11 +128,11 @@ class DataExtractor:
 
         Returns:
         --------
-        dict
-            A dictionary containing the extracted data, such as title, date, and description.
+        dict or None
+            A dictionary containing the extracted data, such as title, date, and description,
+            or None if the data doesn't meet the defined conditions.
         """
         extracted_data = {}
-        # Mapping each key to its corresponding HTML element, attribute, and default value
         element_mapping = {
             "title": ("title_element", "text", ""),
             "image": ("image_element", "src", ""),
@@ -103,12 +149,28 @@ class DataExtractor:
             else:
                 value = element.get_attribute(attribute) if element else default
 
+            # Special cases
             if key == "title":
                 extracted_data["money_pattern"] = (
                     self.contains_money_patterns(value) if value else ""
                 )
+                extracted_data["count_term"] = (
+                    self.count_searched_term(value) if value else ""
+                )
+            elif key == "date":
+                if not self.is_date_in_range(value):
+                    return None
+            elif key == "category":
+                if not self.is_in_category_defined(value):
+                    return None
 
             extracted_data[key] = value
+
+        # Additional processing
+        if extracted_data["image"]:
+            extracted_data["image"] = self.process_image(extracted_data["image"])
+
+        return extracted_data
 
         # Special case: process the image if it exists
         if extracted_data["image"]:

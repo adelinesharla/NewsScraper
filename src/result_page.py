@@ -1,15 +1,17 @@
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from utils import resilient_action
+from page import Page
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-class ResultPage:
+class ResultPage(Page):
     DIV_SEARCH = "div[data-testid='StickyRail']"
     SEARCH_HEADER = "h1[data-testid='Heading']"
     UL = "ul.search-results__list__2SxSK"
@@ -20,36 +22,10 @@ class ResultPage:
     IMAGE_ITEM = "img"
     DIV_IMAGE_ITEM = "div[data-testid='Image']"
     NEXT_BUTTON = "button[aria-label^='Next stories']"
-
-    def __init__(self, browser, config):
-        self.browser = browser
-        self.config = config
-
-    def wait_for(self, condition, *args, **kwargs):
-        return WebDriverWait(self.browser.driver, self.config["wait_time"]).until(
-            condition(*args), **kwargs
-        )
-
-    def try_wait_for_element(self, condition, element, news):
-        try:
-            web_element = WebDriverWait(
-                self.browser.driver, self.config["wait_time"]
-            ).until(condition)
-            return web_element
-        except TimeoutException:
-            logger.warning(
-                f"The {element} of the news number {news}, was not able to be scraped"
-            )
-            return None
-
-    def find_child_element(self, parent_element, locator, selector=None):
-        try:
-            if selector is None:
-                return parent_element.find_element(By.CSS_SELECTOR, locator)
-            else:
-                return parent_element.find_element(selector, locator)
-        except NoSuchElementException:
-            return None
+    SECTION_BUTTON = "sectionfilter"
+    SECTION_SELECTION = "button[data-testid='Select-Popup']"
+    SECTION_LIST = "//select[@name='sectionfilter']"
+    SECTION_POPUP = ""
 
     @resilient_action
     def verify_results(self):
@@ -153,4 +129,58 @@ class ResultPage:
                 "image_element",
                 item_number,
             )
+        return None
+
+    @resilient_action
+    def click_category_button(self):
+        section_button = self.wait_for(
+            EC.element_to_be_clickable,
+            (By.ID, self.SECTION_BUTTON),
+        )
+        if section_button is None:
+            raise NoSuchElementException("Category button is None.")
+        section_button.click()
+        logger.info("Successfully clicked in category button")
+        return None
+
+    @resilient_action
+    def click_category_selection(self, category):
+        section_button = self.wait_for(
+            EC.element_to_be_clickable,
+            (By.ID, self.SECTION_BUTTON),
+        )
+        if section_button is None:
+            raise NoSuchElementException("Category button is None.")
+        section_button.click()
+        logger.info("Successfully clicked in category button")
+
+        element = self.wait_for(
+            EC.visibility_of_element_located,
+            (By.XPATH, self.SECTION_LIST),
+        )
+        if element is None:
+            raise NoSuchElementException("Category select element is None.")
+        logger.info("Successfully located select element")
+
+        option = self.wait_for(
+            EC.presence_of_element_located,
+            (By.XPATH, f"//option[@value='{category.capitalize()}']"),
+        )
+        if option is None:
+            raise NoSuchElementException("Category option element is None.")
+        self.browser.driver.execute_script("arguments[0].scrollIntoView();", option)
+        option = self.wait_for(
+            EC.visibility_of_element_located,
+            (By.XPATH, f"//option[@value='{category.capitalize()}']"),
+        )
+        if option is None:
+            raise NoSuchElementException("Category option element is None.")
+        logger.info("Successfully located option element")
+        # self.browser.driver.execute_script("arguments[0].selected = true;", option)
+        element.click()
+        logger.info("select click")
+
+        select_element = Select(element)
+        select_element.select_by_value(category.capitalize())
+        logger.info(f"Successfully select category item '{category.capitalize()}'")
         return None
