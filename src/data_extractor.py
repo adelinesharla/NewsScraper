@@ -97,7 +97,7 @@ class DataExtractor:
         for item in page:
             extract = self.extract_data(item)
             if extract is not None:
-                data.append()
+                data.append(extract)
         return data
 
     def is_date_in_range(self, date_time_str):
@@ -125,7 +125,6 @@ class DataExtractor:
             "title": ("title_element", "text", ""),
             "image": ("image_element", "src", ""),
             "date": ("time_element", "datetime", ""),
-            "category": ("category_element", "text", ""),
         }
 
         # Extract the data
@@ -183,6 +182,7 @@ class DataExtractor:
 
             excel.save_workbook()
             excel.close_workbook()
+
         except Exception as e:
             logging.error(f"An error occurred while saving to Excel: {e}")
             raise e

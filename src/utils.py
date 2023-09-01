@@ -35,11 +35,6 @@ def resilient_action(_func=None, *, retries=3, delay=10):
 
     Returns:
         callable: The wrapped function with added resilience.
-
-    TODO:
-        - Understand which parameters use in functions, testing and analising
-        - Check for more exceptions that could be retried
-        - Check actions to do before retry (for example in open website should close all others first)
     """
 
     def decorator(func):

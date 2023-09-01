@@ -46,6 +46,7 @@ def main():
         library.get_input_work_item()
         inputs = library.get_work_item_variables()
         library.create_output_work_item()
+
         scraper = Scraper(inputs["settings"])
         extractor = DataExtractor(
             inputs["search_term"], inputs["category"], inputs["month_number"]
@@ -58,7 +59,9 @@ def main():
 
         # Perform search by term and category
         scraper.search_for_term_by_category(inputs["search_term"], inputs["category"])
-        logger.info(f"Completed Steps 3 and 4: Searched for term '{inputs['search_term']}' under category '{inputs['category']}'.")
+        logger.info(
+            f"Completed Steps 3 and 4: Searched for term '{inputs['search_term']}' under category '{inputs['category']}'."
+        )
 
         # Initialize data container and loop through search results
         data = []
@@ -66,15 +69,17 @@ def main():
         while True:
             search_results = scraper.get_page_results()
             scraped_results = scraper.scrape_page(search_results)
-            logger.info(f"Completed Step 5.{scraped_iterations}: Retrieved {len(search_results)} search results.")
-            
+            logger.info(
+                f"Completed Step 5.{scraped_iterations}: Retrieved {len(search_results)} search results."
+            )
+
             data_extracted = extractor.extract_from_page(scraped_results)
-            if data_extracted:
+            if len(data_extracted) > 0:
                 data.extend(data_extracted)
-            
+
             if not scraper.go_to_next_page():
                 break
-            
+
             logger.info(f"Processed page {scraped_iterations}.")
             scraped_iterations += 1
 
