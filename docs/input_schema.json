@@ -3,7 +3,7 @@
         "base_url": "https://www.reuters.com/",
         "wait_time": 10
     },
-    "search_term": "brazil womens",
-    "mounth_number": 3,
-    "category": "sport"
+    "search_term": "female basketball",
+    "month_number": 9,
+    "category": "sports"
 }

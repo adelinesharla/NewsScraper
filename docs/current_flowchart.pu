@@ -1,0 +1,54 @@
+@startuml NewsScraper
+!define RECTANGLE class
+
+state "Initialize RPA bot and fetch work items" as Initial
+
+Initial --> OpenSite: Initialize Scraper and DataExtractor
+
+state "Handle website failure" as HandleSiteFailure
+state "End the process" as End
+
+OpenSite -down-> PerformSearch: [Success] Search by term and category
+OpenSite --> HandleSiteFailure: [Failure]
+HandleSiteFailure --> PerformSearch: [Retry Success]
+HandleSiteFailure --> End: [Retry Limit Reached]
+
+state "Loop through search results" as LoopResults
+state "Retrieve page results" as RetrievePage
+state "Scrape and filter data" as ScrapeFilter
+state "Go to the next page" as NextPage
+
+PerformSearch --> HandleSiteFailure: [Failure]
+HandleSiteFailure --> LoopResults: [Retry Success]
+HandleSiteFailure --> End: [Retry Limit Reached]
+
+PerformSearch --> LoopResults
+LoopResults --> RetrievePage
+RetrievePage --> ScrapeFilter
+ScrapeFilter --> NextPage
+NextPage --> LoopResults: [More Pages]
+NextPage --> StoreExcel: [No More Pages]
+
+NextPage --> HandleSiteFailure: [Failure]
+HandleSiteFailure --> LoopResults: [More Pages]
+HandleSiteFailure --> StoreExcel: [No More Pages]
+HandleSiteFailure --> End: [Retry Limit Reached]
+
+state "Store data in Excel file" as StoreExcel
+state "Upload Excel and images to Robocloud Artifacts" as UploadFiles
+
+StoreExcel --> UploadFiles
+UploadFiles --> End
+
+state "Handle Excel failure" as HandleExcelFailure
+state "Handle upload failure" as HandleUploadFailure
+
+StoreExcel --> HandleExcelFailure: [Failure]
+HandleExcelFailure --> StoreExcel: [Retry Success]
+HandleExcelFailure --> End: [Retry Limit Reached]
+
+UploadFiles --> HandleUploadFailure: [Failure]
+HandleUploadFailure --> UploadFiles: [Retry Success]
+HandleUploadFailure --> End: [Retry Limit Reached]
+
+@enduml

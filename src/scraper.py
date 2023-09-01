@@ -9,32 +9,30 @@ logger = logging.getLogger(__name__)
 
 
 class Scraper:
-    """Web scraper class for interacting with a website using Selenium.
+    """Automates web scraping tasks for news data.
 
-    This class handles opening a website, searching for a term, retrieving search results,
-    and closing the browser.
+    This class encapsulates the operations involved in scraping news
+    articles from a website. It navigates through pages, locates specific
+    elements, and extracts needed data. It is designed to be resilient
+    against errors, and uses logging to track its operations.
 
     Attributes:
-        config (dict): Configuration settings for the scraper.
-        browser (Selenium): Selenium browser instance.
+        config (dict): Configuration parameters for the scraper.
+        browser (Selenium): Browser object to interact with the webpage.
+        main_page (MainPage): Object to interact with the main page.
+        result_page (ResultPage): Object to interact with the results page.
 
     Methods:
-        open_website(): Opens the specified website.
-        search_for_term(term: str): Searches for a term on the website.
-        get_search_results(): Retrieves search results.
-        close_browser(): Closes all open browser windows.
-    TODO:
-        - Some news has carrosels or videos instead of images, this is not covered here
-        - Fix click_category_selection in result_page to use in search_for_term_by_category
-        - Check why some news are not being scrape except for the category
+        open_website(): Open the base website.
+        search_for_term_by_category(term, category): Search for news by term and category.
+        get_page_results(): Verify and get the list of news items from the results page.
+        scrape_news(result, number_news): Extracts the data from a specific news item.
+        scrape_page(page): Scrapes all news items on a given page.
+        go_to_next_page(): Navigates to the next results page.
+        close_browser(): Close all open browser windows.
     """
 
     def __init__(self, config):
-        """Initialize Scraper with configuration settings.
-
-        Parameters:
-            config (dict): Configuration settings including base_url.
-        """
         self.config = config
         self.browser = Selenium()
         self.main_page = MainPage(self.browser, self.config)
@@ -42,7 +40,6 @@ class Scraper:
 
     @resilient_action
     def open_website(self):
-        """Open the website specified in the configuration settings."""
         try:
             self.browser.open_available_browser(self.config["base_url"], headless=True)
             logger.info("Successfully opened the website.")
@@ -51,11 +48,6 @@ class Scraper:
             logger.warning(f"A potentially non-critical error occurred: {e}")
 
     def search_for_term_by_category(self, term, category):
-        """Search for a term on the website.
-
-        Parameters:
-            term (str): The search term to be entered into the search bar.
-        """
         sb_element = self.main_page.verify_search_button()
         self.main_page.click_search_button(sb_element)
         is_element = self.main_page.input_search_field(term)

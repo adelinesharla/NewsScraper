@@ -56,7 +56,7 @@ The entry point for the robot is the `main` function, which orchestrates all the
 You can find detailed documentation in the `docs` folder. It contains:
 
 - Input Schema: Describes the format for the input settings.
-- Flowchart: Provides a visual representation of the bot's workflow. Available in both PlantUML and PDF formats.
+- Flowchart: Provides a visual representation of the bot's main workflow. Available in both PlantUML and png formats.
 
 ## Testing
 
@@ -65,7 +65,8 @@ The `tests` folder contains unit tests focused on the critical components of the
 ### Running Tests
 
 ```
-# Add instructions to run tests
+python -m unittest test_data_extractor.py
+python -m unittest test_scraper.py
 ```
 
 ## Known Issues and Limitations
@@ -73,6 +74,7 @@ The `tests` folder contains unit tests focused on the critical components of the
 ### Main
 
 - Investigate whether the `assets` Robotcorp would be more suitable for uploading Excel and PNG files.
+- Parameters validation for the inputs should be implemented.
 
 ### Scraper
 

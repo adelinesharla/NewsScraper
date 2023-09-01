@@ -11,18 +11,32 @@ logger = logging.getLogger(__name__)
 
 
 class DataExtractor:
-    """A class for extracting and storing data related to news articles.
+    """Handle the extraction and processing of web scraped data.
+
+    This class provides methods to process and extract data from web scraped
+    elements. It allows the handling of various data types such as text,
+    images, and dates. Extracted data is filtered based on defined categories
+    and time ranges. Data is also saved to an Excel file.
+
+    Attributes:
+        term (str): The search term to look for.
+        category (str): The category to filter results by.
+        month_number (int): The number of months to consider for filtering by date.
+        excel_file_path (str): Optional; Path where the Excel file will be saved.
+        robot_root (str): The root directory for robot operations.
+        headers (list): List of headers for the Excel file.
 
     Methods:
-    --------
-    extract_data(search_result: dict) -> dict:
-        Extracts relevant data from a given search result.
+        ensure_dir_exists(dir_path): Ensure the directory exists, create it otherwise.
+        process_image(url): Download and save an image from a URL.
+        contains_money_patterns(input_str): Check if a string contains patterns related to money.
+        count_searched_term(title): Count occurrences of the search term in a title.
+        extract_from_page(page): Extract data from a page of search results.
+        is_date_in_range(date_time_str): Check if a date is in the defined time range.
+        is_in_category_defined(category): Check if an item belongs to a defined category.
+        extract_data(search_result): Extract relevant data from a search result element.
+        store_data_to_excel(data): Store extracted data in an Excel file.
 
-    store_data_to_excel(data: dict) -> None:
-        Stores the extracted data into an Excel file.
-
-        - On the result page select a news category or section from the Choose the latest (i.e., newest) news
-        - Stop scrapping when limit month is reached
     """
 
     def __init__(self, term, category, month_number, excel_file_path=None):
@@ -36,19 +50,6 @@ class DataExtractor:
             "title",
             "image",
             "date",
-        ]
-        self.categorys = [
-            "All",
-            "World",
-            "Business",
-            "Legal",
-            "Markets",
-            "Breakingviews",
-            "Technology",
-            "Sustainability",
-            "Science",
-            "Sports",
-            "Lifestyle",
         ]
         self.term = term
         self.category = category
@@ -115,23 +116,10 @@ class DataExtractor:
         return earliest_date_in_range <= date_time <= current_time
 
     def is_in_category_defined(self, category):
-        return self.category == category
+        return self.category.lower() == category.lower()
 
     @resilient_action
     def extract_data(self, search_result):
-        """Extract relevant data from a given search result.
-
-        Parameters:
-        -----------
-        search_result : dict
-            A dictionary containing the HTML elements or data of a search result.
-
-        Returns:
-        --------
-        dict or None
-            A dictionary containing the extracted data, such as title, date, and description,
-            or None if the data doesn't meet the defined conditions.
-        """
         extracted_data = {}
         element_mapping = {
             "title": ("title_element", "text", ""),
@@ -166,12 +154,6 @@ class DataExtractor:
 
             extracted_data[key] = value
 
-        # Additional processing
-        if extracted_data["image"]:
-            extracted_data["image"] = self.process_image(extracted_data["image"])
-
-        return extracted_data
-
         # Special case: process the image if it exists
         if extracted_data["image"]:
             extracted_data["image"] = self.process_image(extracted_data["image"])
@@ -180,17 +162,6 @@ class DataExtractor:
 
     @resilient_action
     def store_data_to_excel(self, data):
-        """Store the extracted data into an Excel file.
-
-        Parameters:
-        -----------
-        data : dict
-            A dictionarie of the extracted data.
-
-        Returns:
-        --------
-        None
-        """
         self.ensure_dir_exists(os.path.dirname(self.excel_file_path))
 
         excel = Files()

@@ -1,59 +1,53 @@
-import pytest
-from RPA.Browser.Selenium import Selenium
+import unittest
+from unittest.mock import patch, Mock
 from src.scraper import Scraper
+from selenium.common.exceptions import TimeoutException
 
 
-class TestScraper:
-    @pytest.fixture
-    def setup_scraper(self):
-        config = {"base_url": "https://www.reuters.com/", "wait_time": 10}
-        scraper = Scraper(config)
-        yield scraper
-        scraper.close_browser()
+class TestScraper(unittest.TestCase):
+    def setUp(self):
+        self.config = {"base_url": "https://example.com"}
+        self.scraper = Scraper(self.config)
 
-    def _test_search_for_term_success(self, setup_scraper):
-        term = "climate change"
-        setup_scraper.open_website()
-        setup_scraper.search_for_term(term)
+    @patch("src.scraper.MainPage")
+    @patch("src.scraper.ResultPage")
+    def test_search_for_term_by_category(self, MockResultPage, MockMainPage):
+        # Test for success
+        self.scraper.search_for_term_by_category("term", "category")
+        self.assertTrue(MockMainPage.verify_search_button.called)
+        self.assertTrue(MockMainPage.click_search_button.called)
+        self.assertTrue(MockMainPage.input_search_field.called)
+        self.assertTrue(MockMainPage.click_to_search.called)
 
-        try:
-            setup_scraper.browser.location_should_contain(term.replace(" ", "+"))
-        except AssertionError:
-            assert False, f"The URL does not contain the term {term.replace(' ', '+')}"
+        # Test for failure (let's say verify_search_button raises an exception)
+        MockMainPage.verify_search_button.side_effect = TimeoutException()
+        with self.assertRaises(TimeoutException):
+            self.scraper.search_for_term_by_category("term", "category")
 
-        try:
-            setup_scraper.browser.page_should_contain(f"Search results for “{term}”")
-        except AssertionError:
-            assert False, f"Page does not contain 'Search results for “{term}”'"
+    @patch("src.scraper.ResultPage")
+    def test_scrape_news(self, MockResultPage):
+        # Test for success
+        result = Mock()
+        number_news = 5
+        output = self.scraper.scrape_news(result, number_news)
+        self.assertIsInstance(output, dict)
 
-    def _test_search_for_term_fail(self, setup_scraper):
-        term = ""
-        setup_scraper.open_website()
-        setup_scraper.search_for_term(term)
+        # Test for failure (let's say verify_item raises an exception)
+        MockResultPage.verify_item.side_effect = TimeoutException()
+        with self.assertRaises(TimeoutException):
+            self.scraper.scrape_news(result, number_news)
 
-        try:
-            setup_scraper.browser.location_should_contain(term.replace(" ", "+"))
-        except AssertionError:
-            assert False, f"The URL does not contain the term {term.replace(' ', '+')}"
+    @patch("src.scraper.ResultPage")
+    def test_go_to_next_page(self, MockResultPage):
+        # Test for success
+        output = self.scraper.go_to_next_page()
+        self.assertTrue(MockResultPage.click_next_button.called)
 
-        try:
-            setup_scraper.browser.page_should_contain(f"Search results for “{term}”")
-            assert (
-                False
-            ), f"Page contains 'Search results for “{term}”', but it shouldn't"
-        except AssertionError:
-            assert True
+        # Test for failure (let's say click_next_button raises an exception)
+        MockResultPage.click_next_button.side_effect = TimeoutException()
+        with self.assertRaises(TimeoutException):
+            self.scraper.go_to_next_page()
 
 
-    def _test_get_search_results_success(self, setup_scraper):
-        term = "brazil womens"
-        setup_scraper.open_website()
-        setup_scraper.search_for_term(term)
-
-        results = setup_scraper.get_search_results()
-        assert results, "No results were scraped."
-        for result in results:
-            assert "title_element" in result, "Result does not contain 'title_element'"
-            assert "link_element" in result, "Result does not contain 'link_element'"
-            assert "category_element" in result, "Result does not contain 'category_element'"
-            assert "time_element" in result, "Result does not contain 'time_element'"
+if __name__ == "__main__":
+    unittest.main()
