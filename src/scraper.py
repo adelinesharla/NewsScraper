@@ -84,7 +84,7 @@ class Scraper:
             "time_element": time_element,
         }
 
-    def scrapy_page(self, page):
+    def scrape_page(self, page):
         scraped_data = []
         scraped_iterations = len(page)
         for result in page:
