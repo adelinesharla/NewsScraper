@@ -23,6 +23,19 @@
 from scraper import Scraper
 from data_extractor import DataExtractor
 from RPA.Robocorp.WorkItems import WorkItems
+import json
+import logging.config
+import logging
+
+
+def setup_logging():
+    with open("./logs/config.json", "r") as f:
+        config = json.load(f)
+    logging.config.dictConfig(config)
+
+
+setup_logging()
+logger = logging.getLogger()
 
 
 def main():
@@ -33,34 +46,46 @@ def main():
     library.create_output_work_item()
     scraper = Scraper(inputs["settings"])
     extractor = DataExtractor()
-    print("Step 1 done. Retrieved configs and inputs.")
+    logger.info("Step 1 done. Retrieved configs and inputs.")
 
     try:
         scraper.open_website()
-        print(f"Step 2 done. Opened {inputs['settings']['base_url']} site")
+        logger.info(f"Step 2 done. Opened {inputs['settings']['base_url']} site")
 
         scraper.search_for_term(inputs["search_term"])
-        print(f"Step 3 done. Searched for {inputs['search_term']}")
+        logger.info(f"Step 3 done. Searched for {inputs['search_term']}")
 
-        search_results = scraper.get_search_results()
-        print(f"Step 4 done. Retrieved the search results: {search_results}")
+        data = []
+        scraped_iterations = 1
+        while True:
+            search_results = scraper.get_search_results()
+            scraped_results = scraper.scrapy_page(search_results)
+            logger.info(
+                f"Step 4.{scraped_iterations} done. Retrieved the search results: {search_results}"
+            )
+            data = data + extractor.extract_from_page(scraped_results)
+            if scraper.go_to_next_page():
+                pass
+            else:
+                break
+            logger.info(f"Number {scraped_iterations} page located.")
+            scraped_iterations += 1
 
-        for result in search_results:
-            data = extractor.extract_data(result)
-            extractor.store_data_to_excel(data)
-        print("Step 5 and 6 done. Extracted and stored relevant data")
+        for item in data:
+            extractor.store_data_to_excel(item)
+        logger.info("Step 5 and 6 done. Extracted and stored relevant data")
         library.add_work_item_file(extractor.excel_file_path)
         library.add_work_item_files("./data/*.png")
-        print("Step 7 and 8 done. Wrote work items for output, and add files")
+        logger.info("Step 7 and 8 done. Wrote work items for output, and add files")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
     finally:
         scraper.close_browser()
         library.add_work_item_files("./logs/*.log")
         library.save_work_item()
-        print("Step 9 done. Closed the web browser and output logs")
+        logger.info("Step 9 done. Closed the web browser and output logs file")
 
 
 if __name__ == "__main__":

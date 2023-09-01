@@ -13,16 +13,19 @@ from selenium.common.exceptions import (
     SessionNotCreatedException,
     InvalidSessionIdException,
 )
+import logging
 
-# Configure logging to capture errors and other events
-logging.basicConfig(level=logging.ERROR, filename="./logs/errors.log")
-logger = logging.getLogger("ResilientDecorator")
+logger = logging.getLogger(__name__)
+
+
 
 class MaxRetriesReachedError(Exception):
     """Exception raised when the maximum number of retries is reached."""
+
     pass
 
-def resilient_action(_func=None, *, retries=3, delay=5):
+
+def resilient_action(_func=None, *, retries=3, delay=10):
     """Decorator to add resilience to a function by catching exceptions.
 
     Args:
@@ -58,20 +61,17 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                     tb = traceback.extract_tb(e.__traceback__)
                     last_trace = tb[-1] if tb else None
                     line = last_trace[1] if last_trace else "Unknown"
-
-
-                    print(f"A retryable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}")
                     logger.error(
                         f"A retryable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}"
                     )
 
                     if attempt < retries:
-                        print(
+                        logger.warning(
                             f"Retrying in {delay} seconds... (Attempt {attempt}/{retries})"
                         )
                         time.sleep(delay)
                     else:
-                        print(f"Failed after {retries} attempts.")
+                        logger.error(f"Failed after {retries} attempts.")
                         raise MaxRetriesReachedError(
                             f"Failed after {retries} attempts."
                         )
@@ -79,15 +79,14 @@ def resilient_action(_func=None, *, retries=3, delay=5):
                     tb = traceback.extract_tb(e.__traceback__)
                     last_trace = tb[-1] if tb else None
                     line = last_trace[1] if last_trace else "Unknown"
-                    print(f"An unrecoverable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}")
                     logger.error(
                         f"An unrecoverable error occurred while executing {func.__name__} at line {line}: {e} {e.__class__.__name__}"
                     )
                     raise e
+
         return wrapper
-    
+
     if _func is None:
         return decorator
     else:
         return decorator(_func)
-

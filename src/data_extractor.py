@@ -6,6 +6,8 @@ from uuid import uuid4
 import os
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class DataExtractor:
     """A class for extracting and storing data related to news articles.
@@ -27,7 +29,7 @@ class DataExtractor:
         self.excel_file_path = excel_file_path or os.path.join(
             self.robot_root, "data", "scraped_data.xlsx"
         )
-        self.headers = ["title", "money_pattern", "image", "date", "category"]
+        self.headers = ["money_pattern", "title", "image", "date", "category"]
 
     def ensure_dir_exists(self, dir_path):
         if not os.path.exists(dir_path):
@@ -63,6 +65,12 @@ class DataExtractor:
         else:
             return False
 
+    def extract_from_page(self, page):
+        data = []
+        for item in page:
+            data.append(self.extract_data(item))
+        return data
+
     @resilient_action
     def extract_data(self, search_result):
         """Extract relevant data from a given search result.
@@ -78,23 +86,34 @@ class DataExtractor:
             A dictionary containing the extracted data, such as title, date, and description.
         """
         extracted_data = {}
-        title_element = search_result.get("title_element")
-        time_element = search_result.get("time_element")
-        category_element = search_result.get("category_element")
-        image_element = search_result.get("image_element")
+        # Mapping each key to its corresponding HTML element, attribute, and default value
+        element_mapping = {
+            "title": ("title_element", "text", ""),
+            "image": ("image_element", "src", ""),
+            "date": ("time_element", "datetime", ""),
+            "category": ("category_element", "text", ""),
+        }
 
-        if title_element:
-            extracted_data["title"] = title_element.text
-            extracted_data["money_pattern"] = self.contains_money_patterns(
-                extracted_data["title"]
-            )
-        if image_element:
-            filename = self.process_image(image_element.get_attribute("src"))
-            extracted_data["image"] = filename
-        if time_element:
-            extracted_data["date"] = time_element.get_attribute("datetime")
-        if category_element:
-            extracted_data["category"] = category_element.text
+        # Extract the data
+        for key, (element_key, attribute, default) in element_mapping.items():
+            element = search_result.get(element_key)
+
+            if attribute == "text":
+                value = element.text if element else default
+            else:
+                value = element.get_attribute(attribute) if element else default
+
+            if key == "title":
+                extracted_data["money_pattern"] = (
+                    self.contains_money_patterns(value) if value else ""
+                )
+
+            extracted_data[key] = value
+
+        # Special case: process the image if it exists
+        if extracted_data["image"]:
+            extracted_data["image"] = self.process_image(extracted_data["image"])
+
         return extracted_data
 
     @resilient_action

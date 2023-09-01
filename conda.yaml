@@ -54,7 +54,6 @@ dependencies:
     - orderedmultidict==1.0.1
     - outcome==1.2.0
     - packaging==23.1
-    - pandas==2.0.3
     - pdfminer.six==20221105
     - pendulum==2.1.2
     - Pillow==9.5.0
