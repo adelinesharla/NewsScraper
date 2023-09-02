@@ -58,7 +58,8 @@ class ResultPage(Page):
             if next_button is None:
                 logger.info("No next button to click")
                 return False
-            next_button.click()
+            self.browser.driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
+            self.browser.driver.execute_script("arguments[0].click();", next_button)
             logger.info("clicked next button")
         except TimeoutException:
             logger.info("No next button to click")
